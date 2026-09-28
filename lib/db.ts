@@ -1,4 +1,5 @@
 import Database from "better-sqlite3";
+import { seedReferenceData } from "./seedReference";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -41,6 +42,7 @@ function createConnection(): Database.Database {
   const schema = fs.readFileSync(SCHEMA_PATH, "utf-8");
   db.exec(schema);
   migrer(db);
+  seedReferenceData(db);
   return db;
 }
 
