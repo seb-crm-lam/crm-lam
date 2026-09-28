@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { seDeconnecter } from "@/lib/auth/actions";
 
 const ITEMS = [
   { href: "/journee", label: "Ma journée" },
@@ -13,6 +14,9 @@ const ITEMS = [
 export default function Nav() {
   const pathname = usePathname();
   const estActif = (href: string) => pathname === href || pathname?.startsWith(href + "/");
+
+  // Pas de navigation sur les pages de connexion et de création du compte.
+  if (pathname === "/connexion" || pathname === "/installation") return null;
 
   return (
     <>
@@ -36,6 +40,11 @@ export default function Nav() {
             </li>
           ))}
         </ul>
+        <form action={seDeconnecter} className="mt-8 px-1">
+          <button type="submit" className="w-full rounded-lg px-3 py-2 text-left text-sm text-muted hover:bg-chip">
+            Se déconnecter
+          </button>
+        </form>
       </nav>
 
       {/* iPhone : barre fixe en bas, à portée de pouce */}
@@ -43,7 +52,7 @@ export default function Nav() {
         className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-card"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <ul className="grid grid-cols-4">
+        <ul className="grid grid-cols-5">
           {ITEMS.map((item) => (
             <li key={item.href}>
               <Link
@@ -56,6 +65,16 @@ export default function Nav() {
               </Link>
             </li>
           ))}
+          <li>
+            <form action={seDeconnecter}>
+              <button
+                type="submit"
+                className="flex h-14 w-full items-center justify-center px-1 text-center text-[13px] font-medium leading-tight text-muted"
+              >
+                Quitter
+              </button>
+            </form>
+          </li>
         </ul>
       </nav>
     </>

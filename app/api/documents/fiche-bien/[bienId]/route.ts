@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "node:fs";
 import path from "node:path";
+import { cheminAbsoluDocument } from "@/lib/documents/storage";
 import { getBien, getBienPhotos, getBienPrestations } from "@/lib/repo";
 import { rendreFicheClientHtml, type PhotoEmbarquee } from "@/lib/documents/fiche-client";
 import { htmlVersPdf } from "@/lib/documents/render-pdf";
@@ -21,12 +22,11 @@ const TYPES_IMAGE: Record<string, string> = {
 };
 
 function photosEmbarquees(bienId: string): PhotoEmbarquee[] {
-  const racine = path.join(process.cwd(), "data", "documents");
   const resultat: PhotoEmbarquee[] = [];
   for (const photo of getBienPhotos(bienId)) {
     if (resultat.length >= 4) break;
-    const cheminAbsolu = path.join(process.cwd(), photo.cheminWeb);
-    if (!cheminAbsolu.startsWith(racine) || !fs.existsSync(cheminAbsolu)) continue;
+    const cheminAbsolu = cheminAbsoluDocument(photo.cheminWeb);
+    if (!cheminAbsolu || !fs.existsSync(cheminAbsolu)) continue;
     // Le HEIC n'est pas lisible par le moteur PDF : il sera converti côté
     // serveur (chaîne photo OVH, cadrage §7). En attendant, il est ignoré.
     const mime = TYPES_IMAGE[path.extname(cheminAbsolu).toLowerCase()];

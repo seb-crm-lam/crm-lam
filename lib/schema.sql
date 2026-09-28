@@ -262,3 +262,13 @@ CREATE TABLE IF NOT EXISTS Evenement (
   auteur TEXT,
   evenementLieId TEXT
 );
+
+-- 28 septembre 2026 — compte de connexion (Seb seul) : e-mail, mot de passe
+-- haché (scrypt), secret du code de vérification (application de codes).
+CREATE TABLE IF NOT EXISTS Utilisateur (
+  id TEXT PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  motDePasseHash TEXT NOT NULL,
+  totpSecret TEXT NOT NULL,
+  dateCreation TEXT NOT NULL
+);

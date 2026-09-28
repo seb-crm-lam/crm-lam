@@ -12,7 +12,29 @@ import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "crypto";
 
-const RACINE_DOCUMENTS = path.join(process.cwd(), "data", "documents");
+// 28 septembre 2026 — en production sur Railway, les fichiers vont sur le
+// volume persistant (DATA_DIR/documents), comme data.db : sans cela, ils
+// étaient écrits dans le dossier de l'application et effacés à chaque
+// redéploiement. En local, DATA_DIR n'est pas définie : data/documents/.
+//
+// En base, le chemin reste stocké sous la forme relative
+// "data/documents/<sous-dossier>/<fichier>" (inchangé) ; cheminAbsoluDocument()
+// le traduit vers l'emplacement réel.
+export const RACINE_DOCUMENTS = process.env.DATA_DIR
+  ? path.join(process.env.DATA_DIR, "documents")
+  : path.join(process.cwd(), "data", "documents");
+
+const PREFIXE_RELATIF = path.join("data", "documents");
+
+// Chemin relatif stocké en base → chemin absolu sur le disque, ou null s'il
+// sort de la racine des documents (protection contre la traversée de chemin).
+export function cheminAbsoluDocument(cheminRelatif: string): string | null {
+  const normalise = path.normalize(cheminRelatif);
+  if (!normalise.startsWith(PREFIXE_RELATIF + path.sep)) return null;
+  const absolu = path.join(RACINE_DOCUMENTS, normalise.slice(PREFIXE_RELATIF.length + 1));
+  if (!absolu.startsWith(RACINE_DOCUMENTS + path.sep)) return null;
+  return absolu;
+}
 
 function assurerDossier(sousDossier: string): string {
   const dossier = path.join(RACINE_DOCUMENTS, sousDossier);
