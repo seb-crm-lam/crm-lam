@@ -14,12 +14,14 @@ import {
 } from "@/lib/repo";
 import { marquerDocumentSigne, ajouterPhotosBien, supprimerPhotoBien, mettreAJourPieceDossier } from "@/lib/actions";
 import EnvoyerCompteRendu from "@/components/EnvoyerCompteRendu";
+import PublierSurSite from "@/components/site/PublierSurSite";
 import { NIVEAU_LABELS, BLOC_LABELS, blocFondsActif } from "@/lib/pieces";
 import {
 
   formatDh,
   formatM2,
   formatDate,
+  formatDateHeure,
   TYPE_BIEN_LABELS,
   TRANSACTION_LABELS,
   DIFFUSION_LABELS,
@@ -58,6 +60,19 @@ export default function FicheBienPage({ params }: { params: { id: string } }) {
   const contactsCandidats = fondsActif ? listContacts().filter((c) => !c.anonymise) : [];
   const nomsContacts = new Map(listContacts().map((c) => [c.id, `${c.prenom ?? ""} ${c.nom}`.trim()]));
   const derniereVisite = visites[0];
+
+  // Publication vers le site (28 septembre 2026) : le bouton envoie la
+  // diffusion et le statut en cours de la fiche.
+  const dejaSurSite = bien.siteIdentifiant !== null && bien.siteIdentifiant !== undefined;
+  const retraitDemande =
+    ["brouillon", "off_market", "archive"].includes(bien.diffusionEtat) || bien.statutCommercial === "retire";
+  const libellePublication = retraitDemande
+    ? dejaSurSite
+      ? "Retirer du site"
+      : null
+    : dejaSurSite
+      ? "Mettre à jour sur le site"
+      : "Publier sur le site";
 
   const texteCompteRendu = derniereVisite
     ? [
@@ -401,6 +416,40 @@ export default function FicheBienPage({ params }: { params: { id: string } }) {
 
         {/* Colonne droite */}
         <div className="space-y-6">
+          <div className="card p-5 space-y-3 text-sm">
+            <div className="label-sm">Site internet</div>
+            <div className="grid grid-cols-2 gap-y-2">
+              <div className="label-sm">Diffusion</div>
+              <div>{DIFFUSION_LABELS[bien.diffusionEtat] ?? bien.diffusionEtat}</div>
+              <div className="label-sm">Adresse sur le site</div>
+              <div className="break-all">
+                {bien.siteAdresse ? (
+                  <a href={bien.siteAdresse} target="_blank" rel="noreferrer" className="text-accent underline">
+                    Voir la page
+                  </a>
+                ) : (
+                  "—"
+                )}
+              </div>
+              <div className="label-sm">Identifiant site</div>
+              <div>{bien.siteIdentifiant ?? "—"}</div>
+              <div className="label-sm">Dernière publication</div>
+              <div>
+                {bien.siteDernierePublication
+                  ? `${formatDateHeure(bien.siteDernierePublication)} — ${bien.siteDernierResultat ?? ""}`
+                  : "—"}
+              </div>
+            </div>
+            {libellePublication ? (
+              <PublierSurSite bienId={bien.id} libelle={libellePublication} />
+            ) : (
+              <p className="text-xs text-muted">
+                Pour publier ce bien, passez sa diffusion à « Publié » ou « Publié hors catalogue » (bouton Modifier).
+                Un bien en brouillon ou off-market ne part jamais sur le site.
+              </p>
+            )}
+          </div>
+
           <div className="card p-5">
             <div className="flex items-center justify-between mb-2">
               <span className="label-sm">Feu vert de publication</span>

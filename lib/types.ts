@@ -106,6 +106,13 @@ export interface Bien {
   updatedAt: string;
   datePublication: string | null;
 
+  // Publication vers le site (28 septembre 2026)
+  siteIdentifiant: number | null;
+  siteAdresse: string | null;
+  siteDernierePublication: string | null;
+  siteDernierResultat: string | null;
+  sitePhotosSignature: string | null;
+
   // jointures pratiques (pas des colonnes)
   quartierNom?: string | null;
 }

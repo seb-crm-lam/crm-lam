@@ -140,4 +140,17 @@ function migrer(db: Database.Database) {
   if (!bien.has("description")) {
     executerMigration(db, `ALTER TABLE Bien ADD COLUMN description TEXT`);
   }
+
+  // 28 septembre 2026 — publication vers le site (décision 2 du
+  // claude/CRM_LAM_decisions_28_septembre_publication_site.md) : adresse
+  // sur le site, identifiant site, dernière publication (date + résultat).
+  // sitePhotosSignature est technique : empreinte des photos envoyées, pour
+  // ne renvoyer les photos que si elles ont changé.
+  if (!bien.has("siteIdentifiant")) {
+    executerMigration(db, `ALTER TABLE Bien ADD COLUMN siteIdentifiant INTEGER`);
+    executerMigration(db, `ALTER TABLE Bien ADD COLUMN siteAdresse TEXT`);
+    executerMigration(db, `ALTER TABLE Bien ADD COLUMN siteDernierePublication TEXT`);
+    executerMigration(db, `ALTER TABLE Bien ADD COLUMN siteDernierResultat TEXT`);
+    executerMigration(db, `ALTER TABLE Bien ADD COLUMN sitePhotosSignature TEXT`);
+  }
 }
