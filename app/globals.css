@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-bg text-text font-sans;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-card border border-border rounded-card;
+  }
+  .pill {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium;
+  }
+  .pill-neutral {
+    @apply bg-chip text-text;
+  }
+  .pill-green {
+    @apply bg-greenbg text-green;
+  }
+  .pill-red {
+    @apply bg-redbg text-red;
+  }
+  .pill-accent {
+    @apply bg-accentbg text-accent;
+  }
+  .pill-interne {
+    @apply bg-internebg text-interne;
+  }
+  .chip {
+    @apply inline-flex items-center rounded-full bg-chip px-2.5 py-1 text-xs text-text;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors md:py-2;
+  }
+  .btn-primary {
+    @apply btn bg-accent text-white hover:opacity-90;
+  }
+  .btn-secondary {
+    @apply btn bg-white border border-border text-text hover:bg-chip;
+  }
+  .label-sm {
+    @apply text-xs text-muted;
+  }
+  /* 16 px sur iPhone : en dessous, Safari zoome sur le champ à chaque saisie. */
+  .input {
+    @apply w-full rounded-lg border border-border bg-white px-3 py-2.5 text-base text-text md:py-2 md:text-sm;
+  }
+  .input:focus {
+    @apply outline-none ring-2 ring-accent/30 border-accent;
+  }
+}

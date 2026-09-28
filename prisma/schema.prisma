@@ -1,0 +1,320 @@
+// Schéma CRM LAM — traduit terme à terme de claude/CRM_LAM_schema_donnees.md
+// (projet "CRM LAM", validé par Seb le 19 septembre 2026).
+// SQLite ne supportant pas les enums, chaque champ à liste fermée est un
+// String documenté en commentaire avec ses valeurs autorisées ("|" = ou).
+// Un champ multi-valeurs (ex: equipement, motifs) est stocké en JSON (string).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Référentiels
+// ---------------------------------------------------------------------------
+
+model Quartier {
+  id                      String     @id @default(uuid())
+  nom                     String
+  quartierParentId        String?
+  quartierParent          Quartier?  @relation("QuartierEnfants", fields: [quartierParentId], references: [id])
+  sousQuartiers           Quartier[] @relation("QuartierEnfants")
+  texteIntroductionPublie Boolean    @default(false)
+  datePremierSignalement  DateTime?
+
+  biens      Bien[]
+  recherches Recherche[]
+}
+
+model Prestation {
+  id     String @id @default(uuid())
+  nom    String
+  groupe String // exterieurs|interieurs|equipements|situation
+
+  biens BienPrestation[]
+}
+
+// ---------------------------------------------------------------------------
+// Biens
+// ---------------------------------------------------------------------------
+
+model Bien {
+  id        String   @id @default(uuid())
+  reference String   @unique
+  titre     String
+  typeBien  String // riad|villa|appartement|terrain|fonds_commerce
+  transaction String // vente|location_longue_duree
+
+  ville         String  @default("Marrakech")
+  quartierId    String?
+  quartier      Quartier? @relation(fields: [quartierId], references: [id])
+  situation     String?
+  adresseExacte String? // restreint
+  latitudeExacte    Float? // restreint, jamais envoyé au site
+  longitudeExacte   Float? // restreint, jamais envoyé au site
+  latitudePubliee   Float? // décalage 0-300 m, tiré une seule fois (26 sept. 2026)
+  longitudePubliee  Float?
+  statutJuridique String? // titre_foncier|melkia|en_requisition
+  numeroTitre     String? // interne
+
+  etatBien          String? // a_renover|en_exploitation — peut être vide
+  modeExploitation  String? // maison_hotes|location_entiere|autre — interne
+  surfaceSol        Float?
+  surfaceHabitable  Float?
+  surfaceDeveloppee Float? // interne
+  surfaceTerrain    Float?
+  chambres          Int?
+  sallesBain        Int?
+  niveaux           Int?
+  etage             Int?
+  terrainViabilise  Boolean?
+  constructible     Boolean?
+
+  licenceExploitationTouristique Boolean @default(false) // visible seulement riad + en_exploitation
+
+  prixVente         Float?
+  prixSurDemande    Boolean @default(false)
+  prixPlancher      Float? // interne
+  honorairesPourcentage Float? // interne
+  honorairesMinimumDh  Float? // interne
+  honorairesCharge     String? // vendeur|acquereur|partage — interne
+  afficherPrixM2       Boolean @default(false)
+  loyerMensuel         Float?
+  chargesMensuelles    Float?
+  natureVente          String? // murs|fonds|murs_et_fonds
+  prixFonds            Float?
+  prixMurs             Float?
+
+  etatExploitation                 String? // en_activite|en_cessation
+  activite                         String?
+  capaciteValeur                   Int?
+  capaciteUnite                    String?
+  salaries                         Int?
+  joursOuverture                   String?
+  horairesOuverture                String?
+  licenceAlcool                    Boolean?
+  droitTerrasse                    Boolean?
+  autorisationExploitation         Boolean?
+  autorisationExploitationActivite String?
+  equipement                       String? // JSON: ["equipe","chambre_froide",...]
+
+  exclusivite               Boolean @default(false)
+  mentionEditoriale         String? // aucune|coup_de_coeur|rare
+  solutionCleEnMainChiffree Boolean @default(false) // interne
+
+  diffusionEtat     String  @default("brouillon") // brouillon|off_market|publie|publie_hors_catalogue|archive
+  statutCommercial  String  @default("disponible") // disponible|sous_promesse|vendu|loue|retire
+  motifDeSortie     String? // interne
+
+  conseillerReferent String?
+  notesInternes      String? // interne — "commentaire" à l'écran
+
+  proprietaireId String?
+  proprietaire   Contact? @relation("BienProprietaire", fields: [proprietaireId], references: [id])
+  apporteurId    String?
+  apporteur      Contact? @relation("BienApporteur", fields: [apporteurId], references: [id])
+  apporteurProcurationAuthentique Boolean?
+  typeOrigine    String? // demarchage|samsar|recommandation_client|confrere|autre — « rds » retiré le 26 septembre 2026 (sujet clos)
+  acheteurId     String?
+  acheteur       Contact? @relation("BienAcheteur", fields: [acheteurId], references: [id])
+
+  // Bloc « Interne » — ex-fiche de mandat
+  estimationAgence     Float?
+  estimationDate       DateTime?
+  estimationFondement  String?
+  contactAcces         String?
+  contactAccesTelephone String?
+  accesPreavis         String?
+  accesCreneaux        String?
+  clesConfiees         Boolean?
+  clesReferenceRecu    String?
+  partageConfrere      Boolean?
+  partageConditions    String?
+  frequenceCompteRendu String? // hebdomadaire|bimensuelle|a_la_demande
+  commissionTauxOuMontant String?
+  commissionALaChargeDe   String? // vendeur|acquereur|agence|autre
+  commissionNote          String?
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  datePublication  DateTime?
+
+  photos            BienPhoto[]
+  prestations       BienPrestation[]
+  bonsVisiteLignes  BonVisiteLigne[]
+  documents         Document[]
+  demandes          Demande[]
+  evenements        Evenement[]
+}
+
+model BienPhoto {
+  id              String   @id @default(uuid())
+  bienId          String
+  bien            Bien     @relation(fields: [bienId], references: [id])
+  cheminOriginal  String
+  cheminWeb       String
+  ordre           Int      @default(0)
+  texteAlternatif String?
+  exifNettoye     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+}
+
+model BienPrestation {
+  bienId       String
+  bien         Bien       @relation(fields: [bienId], references: [id])
+  prestationId String
+  prestation   Prestation @relation(fields: [prestationId], references: [id])
+
+  @@id([bienId, prestationId])
+}
+
+// ---------------------------------------------------------------------------
+// Contacts et recherches
+// ---------------------------------------------------------------------------
+
+model Contact {
+  id                     String    @id @default(uuid())
+  nom                    String
+  prenom                 String?
+  telephone              String?
+  email                  String?
+  cinPasseport           String? // restreint
+  adressePostale         String? // interne
+  agitPourLeCompteDe     String? // interne
+  formeAdresse           String    @default("vous") // vous|tu — décision du 24/09/2026
+  statut                 String    @default("nouveau") // nouveau|en_recherche|en_cours|abouti|inactif
+  motifDeSortie          String? // achete_avec_moi|achete_ailleurs|projet_abandonne|injoignable|hors_cible
+  consentementProspection Boolean  @default(false)
+  dateConsentement       DateTime?
+  origineConsentement    String? // formulaire_site|oral_en_visite|whatsapp|email|autre
+  dateDernierContact     DateTime?
+  anonymise              Boolean   @default(false)
+  dateAnonymisation      DateTime?
+
+  recherches        Recherche[]
+  bonsVisite        BonVisite[]
+  documents         Document[]
+  evenements        Evenement[]
+  biensProprietaire Bien[]      @relation("BienProprietaire")
+  biensApporteur    Bien[]      @relation("BienApporteur")
+  biensAcheteur     Bien[]      @relation("BienAcheteur")
+}
+
+model Recherche {
+  id                       String    @id @default(uuid())
+  contactId                String
+  contact                  Contact   @relation(fields: [contactId], references: [id])
+  typeBien                 String? // mêmes valeurs que Bien.typeBien
+  quartierId               String?
+  quartier                 Quartier? @relation(fields: [quartierId], references: [id])
+  surfaceSolMin            Float?
+  budgetMax                Float?
+  modeExploitationRecherche String?
+  messageProspect          String? // ce que le visiteur écrit lui-même
+  criteresLibres           String? // précisions ajoutées par Seb après qualification
+  statut                   String    @default("actif") // actif|satisfait|abandonne
+  createdAt                DateTime  @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Bons de visite et visites
+// ---------------------------------------------------------------------------
+
+model BonVisite {
+  id            String    @id @default(uuid())
+  reference     String    @unique
+  contactId     String
+  contact       Contact   @relation(fields: [contactId], references: [id])
+  agent         String?
+  lieu          String?
+  dateCreation  DateTime  @default(now())
+  signe         Boolean   @default(false)
+  dateSignature DateTime?
+  photoPapier   String?
+
+  lignes BonVisiteLigne[]
+}
+
+model BonVisiteLigne {
+  id                              String    @id @default(uuid())
+  bonVisiteId                     String
+  bonVisite                       BonVisite @relation(fields: [bonVisiteId], references: [id])
+  bienId                          String
+  bien                            Bien      @relation(fields: [bienId], references: [id])
+  dateLigne                       DateTime  @default(now())
+  paraphe                         Boolean   @default(false)
+  honorairesAcquereurPourcentage  Float?
+  finNonContournement             DateTime
+
+  visites Visite[]
+}
+
+model Visite {
+  id                 String         @id @default(uuid())
+  bonVisiteLigneId   String
+  bonVisiteLigne     BonVisiteLigne @relation(fields: [bonVisiteLigneId], references: [id])
+  dateVisite         DateTime       @default(now())
+  pieceIdentiteVue   Boolean        @default(false)
+  verdict            String? // coup_de_coeur|interesse|a_revoir|ecarte
+  motifs             String? // JSON: ["prix","travaux",...]
+  noteLibre          String?
+  objectionPrix      Float?
+  suite              String? // relance_a_date|seconde_visite|offre_a_venir|rien
+  dateRelance        DateTime?
+}
+
+// ---------------------------------------------------------------------------
+// Documents, demandes, événements
+// ---------------------------------------------------------------------------
+
+model Document {
+  id             String    @id @default(uuid())
+  typeDocument   String // mandat|bon_visite|engagement_confidentialite
+  bienId         String?
+  bien           Bien?     @relation(fields: [bienId], references: [id])
+  contactId      String?
+  contact        Contact?  @relation(fields: [contactId], references: [id])
+  modeleVersion  String?
+  dateGeneration DateTime  @default(now())
+  signe          Boolean   @default(false)
+  dateSignature  DateTime?
+  photoPapier    String?
+  fichierPdf     String?
+}
+
+model Demande {
+  id                 String    @id @default(uuid())
+  typeDemande        String // question_visite|recherche_bien|estimation|demande_mission|demande_cle_en_main|autre
+  nom                String?
+  email              String?
+  telephone          String?
+  bienId             String?
+  bien               Bien?     @relation(fields: [bienId], references: [id])
+  message            String?
+  lu                 Boolean   @default(false)
+  dateReception      DateTime  @default(now())
+  dateReponse        DateTime?
+  alerteEnvoyee      Boolean   @default(false)
+  typeBienEstime     String?
+  quartierTexte      String?
+  surfaceTexte       String?
+  statutTitreEstime  String? // titre_foncier|melkia|en_requisition|je_ne_sais_pas
+  exploite           Boolean?
+}
+
+model Evenement {
+  id            String    @id @default(uuid())
+  contactId     String?
+  contact       Contact?  @relation(fields: [contactId], references: [id])
+  bienId        String?
+  bien          Bien?     @relation(fields: [bienId], references: [id])
+  typeEvenement String // appel|envoi_whatsapp|envoi_email|publication|changement_statut|visite|...
+  dateEvenement DateTime  @default(now())
+  detail        String?
+  auteur        String?
+  evenementLieId String? // 24/09/2026 : une annulation d'envoi pointe vers l'envoi corrigé (append-only)
+}
