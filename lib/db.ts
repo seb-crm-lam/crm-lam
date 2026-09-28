@@ -35,10 +35,21 @@ function executerMigration(db: Database.Database, sql: string) {
 }
 
 function createConnection(): Database.Database {
+  // Au premier build (et au premier demarrage), le dossier du volume
+  // Railway peut ne pas encore exister : on le cree si besoin avant
+  // d'ouvrir la base, sinon better-sqlite3 echoue avec "directory does
+  // not exist".
+  if (DATA_DIR && !fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
   const db = new Database(DB_PATH);
+  // busy_timeout doit etre regle EN PREMIER, avant tout autre pragma ou
+  // requete : sinon le changement de journal_mode lui-meme peut echouer
+  // avec SQLITE_BUSY si un autre processus (un autre worker du build
+  // Next.js, par exemple) a la base ouverte au meme instant.
+  db.pragma("busy_timeout = 5000");
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
-  db.pragma("busy_timeout = 5000");
   const schema = fs.readFileSync(SCHEMA_PATH, "utf-8");
   db.exec(schema);
   migrer(db);
@@ -46,11 +57,32 @@ function createConnection(): Database.Database {
   return db;
 }
 
-// On garde une seule connexion en mémoire par processus (dev comme
-// production) pour ne pas rouvrir le fichier ni relancer les migrations à
-// chaque import du module.
-export const db: Database.Database = global.__crmLamDb ?? createConnection();
-global.__crmLamDb = db;
+// La connexion n'est ouverte qu'au premier usage reel (la premiere requete
+// qui execute une requete SQL), jamais au simple chargement du module. Ceci
+// est essentiel : pendant "next build", Next.js importe chaque route pour
+// l'analyser, y compris les routes marquees force-dynamic qui ne doivent
+// jamais toucher la base au build. Si la connexion s'ouvrait des l'import
+// (comme avant), plusieurs processus du build tentaient de creer/migrer la
+// meme base en meme temps et se bloquaient mutuellement (SQLITE_BUSY).
+//
+// Le Proxy ci-dessous se comporte exactement comme une vraie connexion
+// better-sqlite3 (db.prepare(...), db.exec(...), etc.) pour ne rien changer
+// ailleurs dans le code, mais ne cree la vraie connexion qu'a la premiere
+// utilisation.
+function getConnection(): Database.Database {
+  if (!global.__crmLamDb) {
+    global.__crmLamDb = createConnection();
+  }
+  return global.__crmLamDb;
+}
+
+export const db: Database.Database = new Proxy({} as Database.Database, {
+  get(_target, prop, _receiver) {
+    const conn = getConnection();
+    const valeur = Reflect.get(conn, prop, conn);
+    return typeof valeur === "function" ? valeur.bind(conn) : valeur;
+  },
+});
 
 // Colonnes ajoutées après la création d'une base existante : CREATE TABLE IF
 // NOT EXISTS ne les ajoute pas, on les ajoute ici sans toucher aux données.
