@@ -2,7 +2,12 @@ import Database from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
 
-const DB_PATH = path.join(process.cwd(), "data.db");
+// En production sur Railway, DATA_DIR pointe vers le volume persistant
+// (/data) monte sur le service, pour que data.db survive aux redemarrages
+// et aux redeploiements. En local (developpement), DATA_DIR n'est pas
+// definie et on garde l'ancien emplacement (a la racine du projet).
+const DATA_DIR = process.env.DATA_DIR;
+const DB_PATH = DATA_DIR ? path.join(DATA_DIR, "data.db") : path.join(process.cwd(), "data.db");
 const SCHEMA_PATH = path.join(process.cwd(), "lib", "schema.sql");
 
 declare global {
