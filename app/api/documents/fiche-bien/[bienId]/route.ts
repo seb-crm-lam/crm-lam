@@ -6,6 +6,10 @@ import { rendreFicheClientHtml, type PhotoEmbarquee } from "@/lib/documents/fich
 import { htmlVersPdf } from "@/lib/documents/render-pdf";
 import { AGENCE_WHATSAPP, CONSEILLER_PAR_DEFAUT } from "@/lib/agence";
 
+
+
+export const dynamic = "force-dynamic";
+
 // Fiche bien d'une page envoyée au client (décision du 24 septembre 2026).
 // Générée à la demande, non archivée : c'est un document commercial, l'envoi
 // lui-même est tracé dans l'historique du contact et du bien.

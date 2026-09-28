@@ -6,6 +6,10 @@ import { rendreCompteRenduHtml } from "@/lib/documents/compte-rendu";
 import { htmlVersPdf } from "@/lib/documents/render-pdf";
 import { enregistrerPdf } from "@/lib/documents/storage";
 
+
+
+export const dynamic = "force-dynamic";
+
 // Génère le PDF du compte rendu de démarches (A31, art. 6 du mandat V3.1) —
 // reprend toutes les visites du bien, jamais seulement la dernière (à la
 // différence du message WhatsApp, qui ne porte que sur la dernière visite).

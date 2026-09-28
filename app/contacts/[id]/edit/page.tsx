@@ -2,6 +2,10 @@ import { notFound } from "next/navigation";
 import { getContact } from "@/lib/repo";
 import ContactForm from "@/components/ContactForm";
 
+
+
+export const dynamic = "force-dynamic";
+
 export default function EditContactPage({ params }: { params: { id: string } }) {
   const contact = getContact(params.id);
   if (!contact) notFound();

@@ -5,6 +5,10 @@ import { htmlVersPdf } from "@/lib/documents/render-pdf";
 import { enregistrerPdf } from "@/lib/documents/storage";
 import { randomUUID } from "crypto";
 
+
+
+export const dynamic = "force-dynamic";
+
 // Génère le PDF d'un bon de visite déjà créé en base (via creerBonVisite) —
 // le PDF est donc toujours le reflet exact de ce qui est enregistré, jamais
 // d'une sélection de biens saisie à part.

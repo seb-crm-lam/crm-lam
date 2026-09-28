@@ -14,6 +14,10 @@ import { preparerEnvoi, libelleCourt } from "@/lib/documents/fiche-client";
 import { CONSEILLER_PAR_DEFAUT } from "@/lib/agence";
 import type { Bien, Contact } from "@/lib/types";
 
+
+
+export const dynamic = "force-dynamic";
+
 // Props du bouton d'envoi : message et fiche client (décisions du 24/09/2026).
 // Le lien public de la fiche n'est pas encore connu du CRM (synchronisation
 // avec le site à venir) : le message renvoie à la fiche PDF jointe.

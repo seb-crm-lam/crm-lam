@@ -2,6 +2,10 @@ import { notFound } from "next/navigation";
 import { getBien } from "@/lib/repo";
 import BienForm from "@/components/BienForm";
 
+
+
+export const dynamic = "force-dynamic";
+
 export default function EditBienPage({ params }: { params: { id: string } }) {
   const bien = getBien(params.id);
   if (!bien) notFound();

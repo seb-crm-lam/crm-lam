@@ -16,6 +16,7 @@ import { marquerDocumentSigne, ajouterPhotosBien, supprimerPhotoBien, mettreAJou
 import EnvoyerCompteRendu from "@/components/EnvoyerCompteRendu";
 import { NIVEAU_LABELS, BLOC_LABELS, blocFondsActif } from "@/lib/pieces";
 import {
+
   formatDh,
   formatM2,
   formatDate,
@@ -32,6 +33,9 @@ import {
   ETAT_EXPLOITATION_LABELS,
   EQUIPEMENT_LABELS,
 } from "@/lib/format";
+
+
+export const dynamic = "force-dynamic";
 
 export default function FicheBienPage({ params }: { params: { id: string } }) {
   const bien = getBien(params.id);

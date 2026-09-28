@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getBonVisite, getBonVisiteLignes, getContact, getVisitesPourLigne } from "@/lib/repo";
 import { marquerBonVisiteSigne, creerVisite } from "@/lib/actions";
 import {
+
   formatDate,
   formatDateHeure,
   formatDh,
@@ -11,6 +12,9 @@ import {
   MOTIF_VISITE_LABELS,
   SUITE_VISITE_LABELS,
 } from "@/lib/format";
+
+
+export const dynamic = "force-dynamic";
 
 const MOTIFS = Object.entries(MOTIF_VISITE_LABELS);
 

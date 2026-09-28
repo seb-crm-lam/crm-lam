@@ -7,6 +7,10 @@ import { htmlVersPdf } from "@/lib/documents/render-pdf";
 import { enregistrerPdf } from "@/lib/documents/storage";
 import { CONSEILLER_PAR_DEFAUT } from "@/lib/agence";
 
+
+
+export const dynamic = "force-dynamic";
+
 // Engagement de confidentialité (fonds de commerce) — même mécanique que le
 // mandat (A30) : PDF prérempli, trace dans Document, « marquer signé » sur la
 // fiche du bien. Paramètres : contactId (candidat), taux (article 5).

@@ -8,6 +8,10 @@ import {
 } from "@/lib/repo";
 import { formatDh, formatM2, formatDate, formatDateHeure, TYPE_BIEN_LABELS } from "@/lib/format";
 
+
+
+export const dynamic = "force-dynamic";
+
 // Libellés lisibles de l'historique ; un type inconnu s'affiche tel quel.
 const EVENEMENT_LABELS: Record<string, string> = {
   whatsapp_envoye: "WhatsApp envoyé",

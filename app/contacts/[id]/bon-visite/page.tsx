@@ -3,6 +3,10 @@ import { getContact, listBiens } from "@/lib/repo";
 import { creerBonVisite } from "@/lib/actions";
 import { TYPE_BIEN_LABELS } from "@/lib/format";
 
+
+
+export const dynamic = "force-dynamic";
+
 export default function BonVisitePage({ params }: { params: { id: string } }) {
   const contact = getContact(params.id);
   if (!contact) notFound();

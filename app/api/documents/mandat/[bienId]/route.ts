@@ -6,6 +6,10 @@ import { rendreMandatHtml } from "@/lib/documents/mandat";
 import { htmlVersPdf } from "@/lib/documents/render-pdf";
 import { enregistrerPdf } from "@/lib/documents/storage";
 
+
+
+export const dynamic = "force-dynamic";
+
 // Génère le mandat en PDF et enregistre la trace de sa génération dans
 // Document (A30 : « Sur la fiche du bien, un bouton "Créer le mandat" » —
 // chaque clic crée une ligne, marquée "signé" plus tard depuis la fiche bien
