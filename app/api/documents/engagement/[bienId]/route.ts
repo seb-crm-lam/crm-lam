@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { db } from "@/lib/db";
 import { getBien, getContact } from "@/lib/repo";
 import { rendreEngagementHtml } from "@/lib/documents/engagement";
-import { htmlVersPdf } from "@/lib/documents/render-pdf";
+import { htmlVersPdf, reponseErreurPdf } from "@/lib/documents/render-pdf";
 import { enregistrerPdf } from "@/lib/documents/storage";
 import { CONSEILLER_PAR_DEFAUT } from "@/lib/agence";
 
@@ -31,7 +31,12 @@ export async function GET(req: NextRequest, { params }: { params: { bienId: stri
   const agent = bien.conseillerReferent || CONSEILLER_PAR_DEFAUT;
 
   const html = rendreEngagementHtml({ bien, candidat, taux: tauxValide, referenceCrm, agent, date: new Date() });
-  const pdf = await htmlVersPdf(html);
+  let pdf: Buffer;
+  try {
+    pdf = await htmlVersPdf(html);
+  } catch (e) {
+    return reponseErreurPdf(e);
+  }
 
   const nomFichier = `${new Date().toISOString().replace(/[:.]/g, "-")}-${id}.pdf`;
   const cheminRelatif = enregistrerPdf(`engagement/${bien.id}`, nomFichier, pdf);

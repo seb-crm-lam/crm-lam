@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { db } from "@/lib/db";
 import { getBien, getContact, getVisitesPourBien } from "@/lib/repo";
 import { rendreCompteRenduHtml } from "@/lib/documents/compte-rendu";
-import { htmlVersPdf } from "@/lib/documents/render-pdf";
+import { htmlVersPdf, reponseErreurPdf } from "@/lib/documents/render-pdf";
 import { enregistrerPdf } from "@/lib/documents/storage";
 
 
@@ -22,7 +22,12 @@ export async function GET(_req: NextRequest, { params }: { params: { bienId: str
   const visites = getVisitesPourBien(bien.id);
 
   const html = rendreCompteRenduHtml(bien, proprietaire, visites);
-  const pdf = await htmlVersPdf(html);
+  let pdf: Buffer;
+  try {
+    pdf = await htmlVersPdf(html);
+  } catch (e) {
+    return reponseErreurPdf(e);
+  }
 
   const id = randomUUID();
   const nomFichier = `${new Date().toISOString().replace(/[:.]/g, "-")}-${id}.pdf`;

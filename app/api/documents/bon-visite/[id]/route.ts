@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getBonVisite, getBonVisiteLignes, getContact } from "@/lib/repo";
 import { rendreBonVisiteHtml } from "@/lib/documents/bon-visite";
-import { htmlVersPdf } from "@/lib/documents/render-pdf";
+import { htmlVersPdf, reponseErreurPdf } from "@/lib/documents/render-pdf";
 import { enregistrerPdf } from "@/lib/documents/storage";
 import { randomUUID } from "crypto";
 
@@ -25,7 +25,12 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   const biens = lignes.map((l) => l.bien);
 
   const html = rendreBonVisiteHtml(visiteur, biens);
-  const pdf = await htmlVersPdf(html);
+  let pdf: Buffer;
+  try {
+    pdf = await htmlVersPdf(html);
+  } catch (e) {
+    return reponseErreurPdf(e);
+  }
 
   const nomFichier = `${new Date().toISOString().replace(/[:.]/g, "-")}-${randomUUID()}.pdf`;
   enregistrerPdf(`bon-visite/${bonVisite.id}`, nomFichier, pdf);

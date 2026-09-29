@@ -4,7 +4,7 @@ import path from "node:path";
 import { cheminAbsoluDocument } from "@/lib/documents/storage";
 import { getBien, getBienPhotos, getBienPrestations } from "@/lib/repo";
 import { rendreFicheClientHtml, type PhotoEmbarquee } from "@/lib/documents/fiche-client";
-import { htmlVersPdf } from "@/lib/documents/render-pdf";
+import { htmlVersPdf, reponseErreurPdf } from "@/lib/documents/render-pdf";
 import { AGENCE_WHATSAPP, CONSEILLER_PAR_DEFAUT } from "@/lib/agence";
 
 
@@ -48,7 +48,12 @@ export async function GET(_req: NextRequest, { params }: { params: { bienId: str
     conseiller: bien.conseillerReferent || CONSEILLER_PAR_DEFAUT,
     whatsappAgence: AGENCE_WHATSAPP,
   });
-  const pdf = await htmlVersPdf(html);
+  let pdf: Buffer;
+  try {
+    pdf = await htmlVersPdf(html);
+  } catch (e) {
+    return reponseErreurPdf(e);
+  }
 
   return new NextResponse(pdf, {
     headers: {
