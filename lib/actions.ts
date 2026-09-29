@@ -113,6 +113,8 @@ function extraireChampsBien(formData: FormData, creation = false) {
     // 26 septembre — origine du bien : liste fermée, « RDS » retiré (sujet clos).
     typeOrigine: champListe(formData, "typeOrigine", TYPES_ORIGINE),
     exclusivite: champBool(formData, "exclusivite"),
+    // 14 septembre : adresse exacte (rue, derb, numéro), interne, jamais publiée.
+    adresseExacte: champTexte(formData, "adresseExacte"),
     latitudeExacte: champNombre(formData, "latitudeExacte"),
     longitudeExacte: champNombre(formData, "longitudeExacte"),
     // Bloc fonds de commerce (§11 champs_bien_et_contact.md / §6 cadrage).
@@ -210,7 +212,7 @@ export async function createBien(formData: FormData) {
       mentionEditoriale, conseillerReferent, typeOrigine, notesInternes, exclusivite,
       diffusionEtat, statutCommercial, estimationAgence, contactAcces, clesConfiees,
       commissionTauxOuMontant, proprietaireId, apporteurId, natureVente, piecesFonds, qualiteMandant,
-      latitudeExacte, longitudeExacte, latitudePubliee, longitudePubliee,
+      adresseExacte, latitudeExacte, longitudeExacte, latitudePubliee, longitudePubliee,
       etatExploitation, activite, capaciteValeur, capaciteUnite, salaries, joursOuverture,
       horairesOuverture, licenceAlcool, droitTerrasse, autorisationExploitation,
       autorisationExploitationActivite, equipement, prixFonds, prixMurs
@@ -221,7 +223,7 @@ export async function createBien(formData: FormData) {
       @mentionEditoriale, @conseillerReferent, @typeOrigine, @notesInternes, @exclusivite,
       @diffusionEtat, @statutCommercial, @estimationAgence, @contactAcces, @clesConfiees,
       @commissionTauxOuMontant, @proprietaireId, @apporteurId, @natureVente, @piecesFonds, @qualiteMandant,
-      @latitudeExacte, @longitudeExacte, @latitudePubliee, @longitudePubliee,
+      @adresseExacte, @latitudeExacte, @longitudeExacte, @latitudePubliee, @longitudePubliee,
       @etatExploitation, @activite, @capaciteValeur, @capaciteUnite, @salaries, @joursOuverture,
       @horairesOuverture, @licenceAlcool, @droitTerrasse, @autorisationExploitation,
       @autorisationExploitationActivite, @equipement, @prixFonds, @prixMurs
@@ -246,7 +248,7 @@ export async function updateBien(bienId: string, formData: FormData) {
   db.prepare(
     `UPDATE Bien SET
       titre = @titre, description = @description, typeBien = @typeBien, transaction_ = @transaction_,
-      quartierId = @quartierId, situation = @situation,
+      quartierId = @quartierId, situation = @situation, adresseExacte = @adresseExacte,
       statutJuridique = @statutJuridique, etatBien = @etatBien,
       surfaceSol = @surfaceSol, surfaceHabitable = @surfaceHabitable,
       chambres = @chambres, sallesBain = @sallesBain,

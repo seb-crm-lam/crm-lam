@@ -461,6 +461,11 @@ export default function BienFormClient({ bien, quartiers, contacts, prestations,
           {/* 26 septembre : coordonnées exactes, restreintes, jamais envoyées.
               Les coordonnées publiées (décalage 0-300 m) sont calculées
               automatiquement à l'enregistrement, tirées une seule fois. */}
+          <div className="sm:col-span-2">
+            <Champ label="Adresse exacte (rue, derb, numéro) — écrite sur le mandat, jamais publiée">
+              <input name="adresseExacte" defaultValue={bien?.adresseExacte ?? ""} className="input" />
+            </Champ>
+          </div>
           <Champ label="Latitude exacte">
             <input type="number" step="any" name="latitudeExacte" defaultValue={bien?.latitudeExacte ?? ""} className="input" />
           </Champ>

@@ -533,6 +533,8 @@ export default function FicheBienPage({ params }: { params: { id: string } }) {
           <div className="card p-5 space-y-3 text-sm border-interne">
             <div className="label-sm text-interne">Bloc interne</div>
             <div className="grid grid-cols-2 gap-y-2">
+              <div className="label-sm">Adresse exacte</div>
+              <div>{bien.adresseExacte ?? "—"}</div>
               <div className="label-sm">Coordonnées exactes</div>
               <div>
                 {bien.latitudeExacte != null && bien.longitudeExacte != null

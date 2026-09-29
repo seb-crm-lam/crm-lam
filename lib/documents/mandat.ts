@@ -27,7 +27,7 @@ export function rendreMandatHtml(bien: Bien, proprietaire: Contact | undefined):
 
   <h2>2 · Bien confié à la vente</h2>
   <p>Nature et adresse : ${champ(
-    [TYPE_BIEN_LABELS[bien.typeBien] ?? bien.typeBien, bien.situation, bien.quartierNom]
+    [TYPE_BIEN_LABELS[bien.typeBien] ?? bien.typeBien, bien.adresseExacte || bien.situation, bien.quartierNom]
       .filter(Boolean)
       .join(" — "),
     400
