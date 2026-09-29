@@ -24,6 +24,7 @@ import path from "node:path";
 import { db } from "@/lib/db";
 import { getBien, getBienPhotos, getBienPrestations } from "@/lib/repo";
 import { cheminAbsoluDocument } from "@/lib/documents/storage";
+import { distanceMetres, RAYON_MIN_M } from "@/lib/geo";
 import type { Bien, BienPhoto } from "@/lib/types";
 
 const URL_PAR_DEFAUT = "https://ladressemarrakchie.com/wp-json/lam/v1";
@@ -343,6 +344,22 @@ export async function publierBienSurSite(bienId: string): Promise<ResultatPublic
       const photos = photosPubliables(bien.id);
       if (photos.length === 0) {
         throw new ErreurPublication("Impossible de publier sans photo (seul refus technique, 14 septembre).");
+      }
+      // Garde-fou coordonnées (29 septembre) : le site ne connaît pas la
+      // position exacte, c'est donc au CRM de refuser l'envoi.
+      if (
+        bien.latitudeExacte == null || bien.longitudeExacte == null ||
+        bien.latitudePubliee == null || bien.longitudePubliee == null
+      ) {
+        throw new ErreurPublication("Impossible de publier sans coordonnées : saisir la latitude et la longitude exactes, puis enregistrer la fiche.");
+      }
+      if (
+        distanceMetres(
+          { latitude: bien.latitudeExacte, longitude: bien.longitudeExacte },
+          { latitude: bien.latitudePubliee, longitude: bien.longitudePubliee }
+        ) < RAYON_MIN_M
+      ) {
+        throw new ErreurPublication("Coordonnées publiées trop proches de la position exacte (moins de 100 m) : enregistrer à nouveau la fiche pour refaire le tirage, puis publier.");
       }
       signature = signaturePhotos(photos);
       const photosChangees = !dejaEnvoye || signature !== bien.sitePhotosSignature;

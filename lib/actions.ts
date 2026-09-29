@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "./db";
 import { getBien } from "./repo";
-import { tirerDecalage } from "./geo";
+import { tirerDecalage, distanceMetres, RAYON_MIN_M } from "./geo";
 import { enregistrerPhotoPapier } from "./documents/storage";
 import { PIECES_DOSSIER, blocFondsParDefaut } from "./pieces";
 
@@ -81,7 +81,9 @@ function extraireChampsBien(formData: FormData, creation = false) {
     natureVente,
     piecesFonds,
     qualiteMandant: champListe(formData, "qualiteMandant", QUALITES_MANDANT),
-    titre: champTexte(formData, "titre") ?? "",
+    // 29 septembre : « m2 » et non « m² » dans les titres (le « ² » devient
+    // %c2%b2 dans l'adresse de la page). Remplacement automatique à la saisie.
+    titre: (champTexte(formData, "titre") ?? "").replace(/m²/g, "m2"),
     description: champTexte(formData, "description"),
     typeBien,
     transaction_: champTexte(formData, "transaction") ?? "vente",
@@ -179,7 +181,14 @@ function calculerCoordonneesPubliees(
     avant &&
     avant.latitudeExacte === latitudeExacte &&
     avant.longitudeExacte === longitudeExacte &&
-    avant.latitudePubliee !== null;
+    avant.latitudePubliee !== null &&
+    avant.longitudePubliee !== null &&
+    // 29 septembre : un tirage ancien à moins de 100 m (règle 0-300 m) est
+    // refait automatiquement au prochain enregistrement.
+    distanceMetres(
+      { latitude: latitudeExacte, longitude: longitudeExacte },
+      { latitude: avant.latitudePubliee, longitude: avant.longitudePubliee }
+    ) >= RAYON_MIN_M;
   if (inchangees) {
     return { latitudePubliee: avant!.latitudePubliee, longitudePubliee: avant!.longitudePubliee };
   }
