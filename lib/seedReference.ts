@@ -88,6 +88,26 @@ const PRESTATIONS: PrestationSeed[] = [
   { id: '3f8dd1e4-4901-4114-bd22-25f276cbc21b', nom: 'Vue Koutoubia', groupe: 'situation' },
 ];
 
+// Quartiers ajoutés après la liste de départ (liste du site, 26 septembre).
+// Insérés au démarrage s'ils manquent (recherche par nom), y compris sur une
+// base déjà en production — la liste de départ ci-dessus ne s'exécute que sur
+// une base vide.
+//  - 16 octobre 2026 : « Route de Ouarzazate », niveau principal comme les
+//    autres routes (Amizmiz, Casablanca, Fès, Ourika) — demande de Seb.
+const QUARTIERS_AJOUTES: QuartierSeed[] = [
+  { id: '0202ab30-6ca1-48a9-a8be-bd330d766f5b', nom: 'Route de Ouarzazate', quartierParentId: null, texteIntroductionPublie: 0, datePremierSignalement: null },
+];
+
+function ajouterQuartiersManquants(db: Database.Database) {
+  const existe = db.prepare("SELECT 1 FROM Quartier WHERE nom = ?");
+  const inserer = db.prepare(
+    "INSERT INTO Quartier (id, nom, quartierParentId, texteIntroductionPublie, datePremierSignalement) VALUES (@id, @nom, @quartierParentId, @texteIntroductionPublie, @datePremierSignalement)"
+  );
+  for (const q of QUARTIERS_AJOUTES) {
+    if (!existe.get(q.nom)) inserer.run(q);
+  }
+}
+
 export function seedReferenceData(db: Database.Database) {
   const quartierCount = (db.prepare("SELECT COUNT(*) c FROM Quartier").get() as { c: number }).c;
   if (quartierCount === 0) {
@@ -101,6 +121,8 @@ export function seedReferenceData(db: Database.Database) {
     });
     tout();
   }
+
+  ajouterQuartiersManquants(db);
 
   const prestationCount = (db.prepare("SELECT COUNT(*) c FROM Prestation").get() as { c: number }).c;
   if (prestationCount === 0) {
