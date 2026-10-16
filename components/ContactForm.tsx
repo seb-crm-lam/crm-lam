@@ -1,4 +1,6 @@
 import { createContact, updateContact } from "@/lib/actions";
+import { listContacts } from "@/lib/repo";
+import { APPORT_CATEGORIE_LABELS, TYPE_APPORTEUR_LABELS } from "@/lib/format";
 import type { Contact } from "@/lib/types";
 
 // Liste validée par Seb le 8 septembre (CRM_LAM_champs_bien_et_contact.md §10).
@@ -12,6 +14,11 @@ const STATUT_OPTIONS = [
 
 export default function ContactForm({ contact }: { contact?: Contact }) {
   const action = contact ? updateContact.bind(null, contact.id) : createContact;
+  // Menus « Présenté par » / « Apporté par » : les autres fiches contact.
+  const autresContacts = listContacts()
+    .filter((c) => c.id !== contact?.id && !c.anonymise)
+    .map((c) => ({ id: c.id, nom: c.prenom ? `${c.prenom} ${c.nom}` : c.nom }))
+    .sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
 
   return (
     <form action={action} className="space-y-6">
@@ -65,6 +72,68 @@ export default function ContactForm({ contact }: { contact?: Contact }) {
             className="input"
           />
         </Champ>
+      </div>
+
+      {/* 16 octobre 2026 — qualification des apporteurs d'affaires. Tous ces
+          champs sont facultatifs ; « Présenté par » = le contact qui a présenté
+          cet apporteur, « Apporté par » = l'apporteur qui a amené ce contact
+          comme client. */}
+      <div className="card p-5 space-y-4">
+        <div className="label-sm">Apporteur</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Champ label="Type d'apporteur">
+            <select name="typeApporteur" defaultValue={contact?.typeApporteur ?? ""} className="input">
+              <option value="">— aucun —</option>
+              {Object.entries(TYPE_APPORTEUR_LABELS).map(([valeur, libelle]) => (
+                <option key={valeur} value={valeur}>
+                  {libelle}
+                </option>
+              ))}
+            </select>
+          </Champ>
+          <Champ label="Ce qu'il apporte">
+            <select name="apportCategorie" defaultValue={contact?.apportCategorie ?? ""} className="input">
+              <option value="">—</option>
+              {Object.entries(APPORT_CATEGORIE_LABELS).map(([valeur, libelle]) => (
+                <option key={valeur} value={valeur}>
+                  {libelle}
+                </option>
+              ))}
+            </select>
+          </Champ>
+          <Champ label="Présenté par (fiche contact)">
+            <select name="presenteParId" defaultValue={contact?.presenteParId ?? ""} className="input">
+              <option value="">—</option>
+              {autresContacts.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nom}
+                </option>
+              ))}
+            </select>
+          </Champ>
+          <Champ label="Apporté par (fiche contact)">
+            <select name="apporteParId" defaultValue={contact?.apporteParId ?? ""} className="input">
+              <option value="">—</option>
+              {autresContacts.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nom}
+                </option>
+              ))}
+            </select>
+          </Champ>
+        </div>
+        <Champ label="Note sur la présentation">
+          <textarea
+            name="notePresentation"
+            defaultValue={contact?.notePresentation ?? ""}
+            rows={3}
+            className="input"
+          />
+        </Champ>
+        <p className="text-xs text-muted">
+          « Présenté par » : le contact qui vous a présenté cet apporteur. « Apporté par » : l'apporteur qui vous a
+          amené ce contact comme client.
+        </p>
       </div>
 
       {/* Décision 1A du 25 septembre : deux accords distincts, chacun avec sa

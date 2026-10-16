@@ -6,7 +6,15 @@ import {
   getEvenementsForContact,
   getBonsVisitePourContact,
 } from "@/lib/repo";
-import { formatDh, formatM2, formatDate, formatDateHeure, TYPE_BIEN_LABELS } from "@/lib/format";
+import {
+  formatDh,
+  formatM2,
+  formatDate,
+  formatDateHeure,
+  TYPE_BIEN_LABELS,
+  TYPE_APPORTEUR_LABELS,
+  APPORT_CATEGORIE_LABELS,
+} from "@/lib/format";
 
 
 
@@ -41,6 +49,17 @@ export default function FicheContactPage({ params }: { params: { id: string } })
   const recherches = getRecherchesForContact(contact.id);
   const evenements = getEvenementsForContact(contact.id);
   const bonsVisite = getBonsVisitePourContact(contact.id);
+  // Liens « Présenté par » / « Apporté par » vers les autres fiches contact.
+  const presentePar = contact.presenteParId ? getContact(contact.presenteParId) : undefined;
+  const apportePar = contact.apporteParId ? getContact(contact.apporteParId) : undefined;
+  const nomContact = (c: { prenom: string | null; nom: string }) => (c.prenom ? `${c.prenom} ${c.nom}` : c.nom);
+  const aUnBlocApporteur = Boolean(
+    contact.typeApporteur ||
+      contact.apportCategorie ||
+      contact.presenteParId ||
+      contact.apporteParId ||
+      contact.notePresentation
+  );
   const cinMasque = contact.cinPasseport
     ? contact.cinPasseport.slice(0, 2) + "••••" + contact.cinPasseport.slice(-2)
     : "—";
@@ -96,6 +115,46 @@ export default function FicheContactPage({ params }: { params: { id: string } })
               )}
             </div>
           </div>
+
+          {aUnBlocApporteur && (
+            <div className="card p-5">
+              <div className="label-sm mb-3">Apporteur</div>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm [overflow-wrap:anywhere]">
+                <div className="label-sm">Type d'apporteur</div>
+                <div>
+                  {contact.typeApporteur ? TYPE_APPORTEUR_LABELS[contact.typeApporteur] ?? contact.typeApporteur : "—"}
+                </div>
+                <div className="label-sm">Ce qu'il apporte</div>
+                <div>
+                  {contact.apportCategorie
+                    ? APPORT_CATEGORIE_LABELS[contact.apportCategorie] ?? contact.apportCategorie
+                    : "—"}
+                </div>
+                <div className="label-sm">Présenté par</div>
+                <div>
+                  {presentePar ? (
+                    <Link href={`/contacts/${presentePar.id}`} className="text-accent hover:underline">
+                      {nomContact(presentePar)}
+                    </Link>
+                  ) : (
+                    "—"
+                  )}
+                </div>
+                <div className="label-sm">Note sur la présentation</div>
+                <div>{contact.notePresentation ?? "—"}</div>
+                <div className="label-sm">Apporté par</div>
+                <div>
+                  {apportePar ? (
+                    <Link href={`/contacts/${apportePar.id}`} className="text-accent hover:underline">
+                      {nomContact(apportePar)}
+                    </Link>
+                  ) : (
+                    "—"
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="card p-5 space-y-4">
             <div className="label-sm">Accords</div>

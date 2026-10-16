@@ -55,6 +55,18 @@ function champListe(formData: FormData, nom: string, valeurs: string[]): string 
   return v && valeurs.includes(v) ? v : null;
 }
 
+// Ce qu'apporte un apporteur (16 octobre 2026) — menu à la main.
+const APPORT_CATEGORIES = ["biens", "clients", "les_deux"];
+
+// Lien vers une autre fiche contact (« Présenté par », « Apporté par ») :
+// ignoré si la fiche n'existe pas ou si c'est la fiche elle-même.
+function champContactLie(formData: FormData, nom: string, soiMemeId?: string): string | null {
+  const id = champTexte(formData, nom);
+  if (!id || id === soiMemeId) return null;
+  const existe = db.prepare(`SELECT 1 FROM Contact WHERE id = ?`).get(id);
+  return existe ? id : null;
+}
+
 function extraireChampsBien(formData: FormData, creation = false) {
   const typeBien = champTexte(formData, "typeBien") ?? "riad";
   const natureVente = typeBien === "fonds_commerce" ? champListe(formData, "natureVente", NATURES_VENTE) : null;
@@ -287,7 +299,7 @@ export async function updateBien(bienId: string, formData: FormData) {
 // Contacts
 // ---------------------------------------------------------------------------
 
-function extraireChampsContact(formData: FormData) {
+function extraireChampsContact(formData: FormData, contactId?: string) {
   return {
     nom: champTexte(formData, "nom") ?? "",
     prenom: champTexte(formData, "prenom"),
@@ -305,6 +317,12 @@ function extraireChampsContact(formData: FormData) {
     accordReponse: champBool(formData, "accordReponse"),
     dateAccordReponse: champTexte(formData, "dateAccordReponse"),
     texteAccordReponse: champTexte(formData, "texteAccordReponse"),
+    // 16 octobre 2026 — qualification des apporteurs d'affaires.
+    typeApporteur: champListe(formData, "typeApporteur", TYPES_ORIGINE),
+    apportCategorie: champListe(formData, "apportCategorie", APPORT_CATEGORIES),
+    presenteParId: champContactLie(formData, "presenteParId", contactId),
+    notePresentation: champTexte(formData, "notePresentation"),
+    apporteParId: champContactLie(formData, "apporteParId", contactId),
   };
 }
 
@@ -324,11 +342,13 @@ export async function createContact(formData: FormData) {
       id, nom, prenom, telephone, email, cinPasseport, adressePostale,
       agitPourLeCompteDe, formeAdresse, statut, consentementProspection, dateConsentement,
       origineConsentement, texteConsentement, accordReponse, dateAccordReponse, texteAccordReponse,
+      typeApporteur, apportCategorie, presenteParId, notePresentation, apporteParId,
       dateDernierContact
     ) VALUES (
       @id, @nom, @prenom, @telephone, @email, @cinPasseport, @adressePostale,
       @agitPourLeCompteDe, @formeAdresse, @statut, @consentementProspection, @dateConsentement,
       @origineConsentement, @texteConsentement, @accordReponse, @dateAccordReponse, @texteAccordReponse,
+      @typeApporteur, @apportCategorie, @presenteParId, @notePresentation, @apporteParId,
       datetime('now')
     )`
   ).run({ id, ...champs });
@@ -338,7 +358,7 @@ export async function createContact(formData: FormData) {
 }
 
 export async function updateContact(contactId: string, formData: FormData) {
-  const champs = extraireChampsContact(formData);
+  const champs = extraireChampsContact(formData, contactId);
   verifierChampsContact(champs);
 
   db.prepare(
@@ -349,7 +369,10 @@ export async function updateContact(contactId: string, formData: FormData) {
       consentementProspection = @consentementProspection,
       dateConsentement = @dateConsentement, origineConsentement = @origineConsentement,
       texteConsentement = @texteConsentement, accordReponse = @accordReponse,
-      dateAccordReponse = @dateAccordReponse, texteAccordReponse = @texteAccordReponse
+      dateAccordReponse = @dateAccordReponse, texteAccordReponse = @texteAccordReponse,
+      typeApporteur = @typeApporteur, apportCategorie = @apportCategorie,
+      presenteParId = @presenteParId, notePresentation = @notePresentation,
+      apporteParId = @apporteParId
     WHERE id = @id`
   ).run({ id: contactId, ...champs });
 

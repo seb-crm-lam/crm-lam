@@ -164,6 +164,12 @@ export interface Contact {
   dateDernierContact: string | null;
   anonymise: boolean;
   dateAnonymisation: string | null;
+  // Qualification des apporteurs d'affaires (16 octobre 2026).
+  typeApporteur: string | null;
+  apportCategorie: string | null;
+  presenteParId: string | null;
+  notePresentation: string | null;
+  apporteParId: string | null;
 }
 
 export interface Recherche {

@@ -153,4 +153,15 @@ function migrer(db: Database.Database) {
     executerMigration(db, `ALTER TABLE Bien ADD COLUMN siteDernierResultat TEXT`);
     executerMigration(db, `ALTER TABLE Bien ADD COLUMN sitePhotosSignature TEXT`);
   }
+
+  // 16 octobre 2026 — qualification des apporteurs d'affaires, sur la fiche
+  // contact. Ajout de colonnes seulement : aucune donnée existante n'est
+  // modifiée. « Présenté par » = le contact qui a présenté cet apporteur ;
+  // « Apporté par » = l'apporteur qui a amené ce contact comme client.
+  const contactApporteur = colonnes("Contact");
+  if (!contactApporteur.has("typeApporteur")) executerMigration(db, `ALTER TABLE Contact ADD COLUMN typeApporteur TEXT`);
+  if (!contactApporteur.has("apportCategorie")) executerMigration(db, `ALTER TABLE Contact ADD COLUMN apportCategorie TEXT`);
+  if (!contactApporteur.has("presenteParId")) executerMigration(db, `ALTER TABLE Contact ADD COLUMN presenteParId TEXT REFERENCES Contact(id)`);
+  if (!contactApporteur.has("notePresentation")) executerMigration(db, `ALTER TABLE Contact ADD COLUMN notePresentation TEXT`);
+  if (!contactApporteur.has("apporteParId")) executerMigration(db, `ALTER TABLE Contact ADD COLUMN apporteParId TEXT REFERENCES Contact(id)`);
 }

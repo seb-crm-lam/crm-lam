@@ -194,6 +194,12 @@ model Contact {
   dateDernierContact     DateTime?
   anonymise              Boolean   @default(false)
   dateAnonymisation      DateTime?
+  // Qualification des apporteurs d'affaires — 16/10/2026
+  typeApporteur          String? // demarchage|samsar|recommandation_client|confrere|autre
+  apportCategorie        String? // biens|clients|les_deux
+  presenteParId          String? // contact qui a présenté cet apporteur
+  notePresentation       String?
+  apporteParId           String? // apporteur qui a amené ce contact comme client
 
   recherches        Recherche[]
   bonsVisite        BonVisite[]

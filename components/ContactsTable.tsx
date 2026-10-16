@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { Contact } from "@/lib/types";
-import { formatDate } from "@/lib/format";
+import { formatDate, TYPE_APPORTEUR_LABELS, APPORT_CATEGORIE_LABELS } from "@/lib/format";
 
 const STATUT_LABELS: Record<string, string> = {
   nouveau: "Nouveau",
@@ -22,6 +22,13 @@ export default function ContactsTable({ contacts }: { contacts: ContactAvecReche
   const [rechercheActiveSeulement, setRechercheActiveSeulement] = useState(false);
   const [consentement, setConsentement] = useState(""); // "", "oui", "non"
   const [tri, setTri] = useState<"recent" | "ancien">("recent");
+
+  // Nom des contacts, pour afficher « Présenté par » / « Apporté par ».
+  const nomParId = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const c of contacts) m.set(c.id, c.prenom ? `${c.prenom} ${c.nom}` : c.nom);
+    return m;
+  }, [contacts]);
 
   const statutsPresents = useMemo(
     () => Array.from(new Set(contacts.map((c) => c.statut))),
@@ -124,6 +131,18 @@ export default function ContactsTable({ contacts }: { contacts: ContactAvecReche
                 <span>Dernier contact : {formatDate(c.dateDernierContact)}</span>
                 {c.rechercheActive && <span className="chip">Recherche active</span>}
               </div>
+              {(c.typeApporteur || c.apportCategorie || c.presenteParId || c.apporteParId) && (
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+                  {c.typeApporteur && (
+                    <span>
+                      {TYPE_APPORTEUR_LABELS[c.typeApporteur] ?? c.typeApporteur}
+                      {c.apportCategorie ? ` · apporte : ${(APPORT_CATEGORIE_LABELS[c.apportCategorie] ?? c.apportCategorie).toLowerCase()}` : ""}
+                    </span>
+                  )}
+                  {c.presenteParId && <span>Présenté par {nomParId.get(c.presenteParId) ?? "—"}</span>}
+                  {c.apporteParId && <span>Apporté par {nomParId.get(c.apporteParId) ?? "—"}</span>}
+                </div>
+              )}
             </li>
           ))
         )}
@@ -136,13 +155,16 @@ export default function ContactsTable({ contacts }: { contacts: ContactAvecReche
               <th className="px-4 py-3 font-medium">Nom</th>
               <th className="px-4 py-3 font-medium">Téléphone</th>
               <th className="px-4 py-3 font-medium">Statut</th>
+              <th className="px-4 py-3 font-medium">Apporteur</th>
+              <th className="px-4 py-3 font-medium">Présenté par</th>
+              <th className="px-4 py-3 font-medium">Apporté par</th>
               <th className="px-4 py-3 font-medium">Dernier contact</th>
             </tr>
           </thead>
           <tbody>
             {resultats.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-muted">
+                <td colSpan={7} className="px-4 py-6 text-center text-muted">
                   Aucun contact ne correspond.
                 </td>
               </tr>
@@ -158,6 +180,38 @@ export default function ContactsTable({ contacts }: { contacts: ContactAvecReche
                   <td className="px-4 py-3">{c.telephone ?? "—"}</td>
                   <td className="px-4 py-3">
                     <span className="pill pill-neutral">{STATUT_LABELS[c.statut] ?? c.statut}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {c.typeApporteur ? (
+                      <>
+                        <div className="font-medium">{TYPE_APPORTEUR_LABELS[c.typeApporteur] ?? c.typeApporteur}</div>
+                        {c.apportCategorie && (
+                          <div className="text-xs text-muted">
+                            apporte : {(APPORT_CATEGORIE_LABELS[c.apportCategorie] ?? c.apportCategorie).toLowerCase()}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-muted">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {c.presenteParId ? (
+                      <Link href={`/contacts/${c.presenteParId}`} className="text-accent hover:underline">
+                        {nomParId.get(c.presenteParId) ?? "—"}
+                      </Link>
+                    ) : (
+                      <span className="text-muted">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {c.apporteParId ? (
+                      <Link href={`/contacts/${c.apporteParId}`} className="text-accent hover:underline">
+                        {nomParId.get(c.apporteParId) ?? "—"}
+                      </Link>
+                    ) : (
+                      <span className="text-muted">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">{formatDate(c.dateDernierContact)}</td>
                 </tr>

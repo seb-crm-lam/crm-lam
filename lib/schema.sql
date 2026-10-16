@@ -40,7 +40,13 @@ CREATE TABLE IF NOT EXISTS Contact (
   texteAccordReponse TEXT,
   dateDernierContact TEXT,
   anonymise INTEGER NOT NULL DEFAULT 0,
-  dateAnonymisation TEXT
+  dateAnonymisation TEXT,
+  -- 16 octobre 2026 — qualification des apporteurs d'affaires.
+  typeApporteur TEXT,
+  apportCategorie TEXT,
+  presenteParId TEXT REFERENCES Contact(id),
+  notePresentation TEXT,
+  apporteParId TEXT REFERENCES Contact(id)
 );
 
 CREATE TABLE IF NOT EXISTS Bien (

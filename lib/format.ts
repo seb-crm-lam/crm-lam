@@ -129,6 +129,17 @@ export const TYPE_ORIGINE_LABELS: Record<string, string> = {
   autre: "Autre",
 };
 
+// Type d'apporteur d'un contact : même liste que l'origine du bien (validée
+// par Seb le 16 octobre 2026, « telle quelle »).
+export const TYPE_APPORTEUR_LABELS = TYPE_ORIGINE_LABELS;
+
+// Ce qu'apporte un apporteur — menu à la main (16 octobre 2026).
+export const APPORT_CATEGORIE_LABELS: Record<string, string> = {
+  biens: "Biens",
+  clients: "Clients",
+  les_deux: "Les deux",
+};
+
 // Équipement d'un fonds de commerce (§11 champs_bien_et_contact.md).
 export const EQUIPEMENT_LABELS: Record<string, string> = {
   equipe: "Équipé",

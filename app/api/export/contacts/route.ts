@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { listContactsAvecRechercheActive } from "@/lib/repo";
+import { TYPE_APPORTEUR_LABELS, APPORT_CATEGORIE_LABELS } from "@/lib/format";
 
 
 // Données lues à chaque affichage (sinon la page serait figée au moment de la construction).
@@ -22,6 +23,7 @@ function csvEchapper(v: unknown): string {
 // Export CSV permanent de la liste des contacts.
 export async function GET() {
   const contacts = listContactsAvecRechercheActive();
+  const nomParId = new Map(contacts.map((c) => [c.id, c.prenom ? `${c.prenom} ${c.nom}` : c.nom]));
 
   const entetes = [
     "Nom",
@@ -32,6 +34,11 @@ export async function GET() {
     "Recherche active",
     "Accord réponse",
     "Consentement prospection",
+    "Type d'apporteur",
+    "Ce qu'il apporte",
+    "Présenté par",
+    "Note sur la présentation",
+    "Apporté par",
     "Dernier contact",
   ];
 
@@ -47,6 +54,11 @@ export async function GET() {
         c.rechercheActive ? "Oui" : "Non",
         c.accordReponse ? "Oui" : "Non",
         c.consentementProspection ? "Oui" : "Non",
+        c.typeApporteur ? TYPE_APPORTEUR_LABELS[c.typeApporteur] ?? c.typeApporteur : "",
+        c.apportCategorie ? APPORT_CATEGORIE_LABELS[c.apportCategorie] ?? c.apportCategorie : "",
+        c.presenteParId ? nomParId.get(c.presenteParId) ?? "" : "",
+        c.notePresentation ?? "",
+        c.apporteParId ? nomParId.get(c.apporteParId) ?? "" : "",
         c.dateDernierContact ?? "",
       ]
         .map(csvEchapper)
