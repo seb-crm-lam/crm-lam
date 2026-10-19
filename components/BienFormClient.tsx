@@ -128,6 +128,16 @@ export default function BienFormClient({ bien, quartiers, contacts, prestations,
               className="input"
             />
           </Champ>
+          {(typeBien === "villa" || typeBien === "terrain") && (
+            <Champ label="Surface du terrain (m²)">
+              <input
+                type="number"
+                name="surfaceTerrain"
+                defaultValue={bien?.surfaceTerrain ?? ""}
+                className="input"
+              />
+            </Champ>
+          )}
           <Champ label="Chambres">
             <input type="number" name="chambres" defaultValue={bien?.chambres ?? ""} className="input" />
           </Champ>
