@@ -149,6 +149,14 @@ export default function BienFormClient({ bien, quartiers, contacts, prestations,
               <option value="">—</option>
               <option value="a_renover">À rénover</option>
               <option value="en_exploitation">En exploitation</option>
+              {/* 19 octobre 2026 — « Semi-fini » et « À démolir » : riad, villa, appartement.
+                  La valeur déjà enregistrée reste affichée si le type change, pour ne rien effacer en silence. */}
+              {(typeBien === "riad" || typeBien === "villa" || typeBien === "appartement" || bien?.etatBien === "semi_fini") && (
+                <option value="semi_fini">Semi-fini</option>
+              )}
+              {(typeBien === "riad" || typeBien === "villa" || typeBien === "appartement" || bien?.etatBien === "a_demolir") && (
+                <option value="a_demolir">À démolir</option>
+              )}
             </select>
           </Champ>
         </div>

@@ -3,7 +3,7 @@
 
 export type TypeBien = "riad" | "villa" | "appartement" | "terrain" | "fonds_commerce";
 export type TransactionType = "vente" | "location_longue_duree";
-export type EtatBien = "a_renover" | "en_exploitation" | null;
+export type EtatBien = "a_renover" | "en_exploitation" | "semi_fini" | "a_demolir" | null;
 export type DiffusionEtat = "brouillon" | "off_market" | "publie" | "publie_hors_catalogue" | "archive";
 export type StatutCommercial = "disponible" | "sous_promesse" | "vendu" | "loue" | "retire";
 

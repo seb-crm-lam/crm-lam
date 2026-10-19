@@ -43,7 +43,12 @@ const TYPE: Record<string, string> = {
   fonds_commerce: "Fonds de commerce",
 };
 const TRANSACTION: Record<string, string> = { vente: "Vente", location_longue_duree: "Location longue durée" };
-const ETAT: Record<string, string> = { a_renover: "À rénover", en_exploitation: "En exploitation" };
+const ETAT: Record<string, string> = {
+  a_renover: "À rénover",
+  en_exploitation: "En exploitation",
+  semi_fini: "Semi-fini",
+  a_demolir: "À démolir",
+};
 const STATUT_JURIDIQUE: Record<string, string> = {
   titre_foncier: "Titre foncier",
   melkia: "Melkia",
