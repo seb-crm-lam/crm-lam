@@ -117,6 +117,9 @@ function migrer(db: Database.Database) {
   const bien = colonnes("Bien");
   if (!bien.has("piecesFonds")) executerMigration(db, `ALTER TABLE Bien ADD COLUMN piecesFonds INTEGER`);
   if (!bien.has("qualiteMandant")) executerMigration(db, `ALTER TABLE Bien ADD COLUMN qualiteMandant TEXT`);
+  // 19 octobre 2026 — surface du terrain (villa, terrain) : garde-fou si une
+  // base ancienne ne porte pas la colonne.
+  if (!bien.has("surfaceTerrain")) executerMigration(db, `ALTER TABLE Bien ADD COLUMN surfaceTerrain REAL`);
 
   // 26 septembre 2026 — coordonnées en deux paires (décision 7 du
   // claude/CRM_LAM_decisions_26_septembre.md) : latitude/longitude EXACTES

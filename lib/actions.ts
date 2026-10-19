@@ -105,6 +105,10 @@ function extraireChampsBien(formData: FormData, creation = false) {
     etatBien: champTexte(formData, "etatBien"),
     surfaceSol: champNombre(formData, "surfaceSol"),
     surfaceHabitable: champNombre(formData, "surfaceHabitable"),
+    // 19 octobre : surface du terrain, villa et terrain seulement (cadrage §3) ;
+    // facultative, hors feu vert. Vidée si le type n'est plus l'un des deux.
+    surfaceTerrain:
+      typeBien === "villa" || typeBien === "terrain" ? champNombre(formData, "surfaceTerrain") : null,
     chambres: champNombre(formData, "chambres"),
     sallesBain: champNombre(formData, "sallesBain"),
     prixVente: champNombre(formData, "prixVente"),
@@ -219,7 +223,7 @@ export async function createBien(formData: FormData) {
   db.prepare(
     `INSERT INTO Bien (
       id, reference, titre, description, typeBien, transaction_, quartierId, situation,
-      statutJuridique, etatBien, surfaceSol, surfaceHabitable, chambres, sallesBain,
+      statutJuridique, etatBien, surfaceSol, surfaceHabitable, surfaceTerrain, chambres, sallesBain,
       prixVente, prixSurDemande, prixPlancher, honorairesPourcentage,
       mentionEditoriale, conseillerReferent, typeOrigine, notesInternes, exclusivite,
       diffusionEtat, statutCommercial, estimationAgence, contactAcces, clesConfiees,
@@ -230,7 +234,7 @@ export async function createBien(formData: FormData) {
       autorisationExploitationActivite, equipement, prixFonds, prixMurs
     ) VALUES (
       @id, @reference, @titre, @description, @typeBien, @transaction_, @quartierId, @situation,
-      @statutJuridique, @etatBien, @surfaceSol, @surfaceHabitable, @chambres, @sallesBain,
+      @statutJuridique, @etatBien, @surfaceSol, @surfaceHabitable, @surfaceTerrain, @chambres, @sallesBain,
       @prixVente, @prixSurDemande, @prixPlancher, @honorairesPourcentage,
       @mentionEditoriale, @conseillerReferent, @typeOrigine, @notesInternes, @exclusivite,
       @diffusionEtat, @statutCommercial, @estimationAgence, @contactAcces, @clesConfiees,
@@ -263,6 +267,7 @@ export async function updateBien(bienId: string, formData: FormData) {
       quartierId = @quartierId, situation = @situation, adresseExacte = @adresseExacte,
       statutJuridique = @statutJuridique, etatBien = @etatBien,
       surfaceSol = @surfaceSol, surfaceHabitable = @surfaceHabitable,
+      surfaceTerrain = @surfaceTerrain,
       chambres = @chambres, sallesBain = @sallesBain,
       prixVente = @prixVente, prixSurDemande = @prixSurDemande,
       prixPlancher = @prixPlancher, honorairesPourcentage = @honorairesPourcentage,
