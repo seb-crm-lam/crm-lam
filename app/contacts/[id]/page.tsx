@@ -36,6 +36,7 @@ const EVENEMENT_LABELS: Record<string, string> = {
 
 const STATUT_LABELS: Record<string, string> = {
   nouveau: "Nouveau",
+  apporteur: "Apporteur",
   en_recherche: "En recherche",
   en_cours: "En cours",
   abouti: "Abouti",

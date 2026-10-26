@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 const STATUT_LABELS: Record<string, string> = {
   nouveau: "Nouveau",
+  apporteur: "Apporteur",
   en_recherche: "En recherche",
   abouti: "Abouti",
   perdu: "Perdu",

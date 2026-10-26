@@ -7,6 +7,7 @@ import { formatDate, TYPE_APPORTEUR_LABELS, APPORT_CATEGORIE_LABELS } from "@/li
 
 const STATUT_LABELS: Record<string, string> = {
   nouveau: "Nouveau",
+  apporteur: "Apporteur",
   en_recherche: "En recherche",
   en_cours: "En cours",
   abouti: "Abouti",

@@ -314,7 +314,7 @@ function extraireChampsContact(formData: FormData, contactId?: string) {
     adressePostale: champTexte(formData, "adressePostale"),
     agitPourLeCompteDe: champTexte(formData, "agitPourLeCompteDe"),
     formeAdresse: champTexte(formData, "formeAdresse") === "tu" ? "tu" : "vous",
-    statut: champTexte(formData, "statut") ?? "nouveau",
+    statut: champTexte(formData, "statut") ?? "en_recherche",
     consentementProspection: champBool(formData, "consentementProspection"),
     dateConsentement: champTexte(formData, "dateConsentement"),
     origineConsentement: champTexte(formData, "origineConsentement"),
