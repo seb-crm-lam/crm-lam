@@ -94,8 +94,11 @@ const PRESTATIONS: PrestationSeed[] = [
 // une base vide.
 //  - 16 octobre 2026 : « Route de Ouarzazate », niveau principal comme les
 //    autres routes (Amizmiz, Casablanca, Fès, Ourika) — demande de Seb.
+//  - 26 octobre 2026 : « Victor Hugo », niveau principal comme Guéliz et
+//    Hivernage (option D choisie par Seb) — sans texte d'introduction.
 const QUARTIERS_AJOUTES: QuartierSeed[] = [
   { id: '0202ab30-6ca1-48a9-a8be-bd330d766f5b', nom: 'Route de Ouarzazate', quartierParentId: null, texteIntroductionPublie: 0, datePremierSignalement: null },
+  { id: '1d342d48-77da-4cd0-9ce5-f8a5855770c3', nom: 'Victor Hugo', quartierParentId: null, texteIntroductionPublie: 0, datePremierSignalement: null },
 ];
 
 function ajouterQuartiersManquants(db: Database.Database) {
