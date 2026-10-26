@@ -139,6 +139,28 @@ export default function ContactForm({ contact }: { contact?: Contact }) {
               className="input"
             />
           </Champ>
+          <Champ label="Chambres minimum">
+            <input
+              type="number"
+              inputMode="numeric"
+              min="0"
+              step="1"
+              name="rechChambresMin"
+              defaultValue={recherche?.chambresMin ?? ""}
+              className="input"
+            />
+          </Champ>
+          <Champ label="Chambres maximum">
+            <input
+              type="number"
+              inputMode="numeric"
+              min="0"
+              step="1"
+              name="rechChambresMax"
+              defaultValue={recherche?.chambresMax ?? ""}
+              className="input"
+            />
+          </Champ>
           <Champ label="Budget maximum (DH)">
             <input
               type="number"

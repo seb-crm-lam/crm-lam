@@ -7,7 +7,7 @@ import {
   matchRecherchesPourBien,
   type NiveauCorrespondance,
 } from "@/lib/repo";
-import { formatDh, formatFourchetteM2, ETAT_RECHERCHE_LABELS, TYPE_BIEN_LABELS } from "@/lib/format";
+import { formatDh, formatFourchetteM2, formatFourchetteChambres, ETAT_RECHERCHE_LABELS, TYPE_BIEN_LABELS } from "@/lib/format";
 import EnvoyerWhatsapp from "@/components/EnvoyerWhatsapp";
 import { getBienPrestations } from "@/lib/repo";
 import { preparerEnvoi, libelleCourt } from "@/lib/documents/fiche-client";
@@ -158,6 +158,8 @@ export default function RapprochementPage({
                     <div>{recherche.quartierNoms.length > 0 ? recherche.quartierNoms.join(", ") : "Tous"}</div>
                     <div className="label-sm">Surface</div>
                     <div>{formatFourchetteM2(recherche.surfaceSolMin, recherche.surfaceSolMax)}</div>
+                    <div className="label-sm">Chambres</div>
+                    <div>{formatFourchetteChambres(recherche.chambresMin, recherche.chambresMax)}</div>
                     <div className="label-sm">Budget max.</div>
                     <div>{formatDh(recherche.budgetMax)}</div>
                     <div className="label-sm">État du bien</div>

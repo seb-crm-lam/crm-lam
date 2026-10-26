@@ -173,6 +173,8 @@ CREATE TABLE IF NOT EXISTS Recherche (
   quartierId TEXT REFERENCES Quartier(id),
   surfaceSolMin REAL,
   budgetMax REAL,
+  chambresMin INTEGER,
+  chambresMax INTEGER,
   modeExploitationRecherche TEXT,
   messageProspect TEXT,
   criteresLibres TEXT,

@@ -37,6 +37,12 @@ function champNombre(formData: FormData, nom: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+// Entier positif ou nul ; vide ou invalide = null.
+function champEntier(formData: FormData, nom: string): number | null {
+  const n = champNombre(formData, nom);
+  return n !== null && Number.isInteger(n) && n >= 0 ? n : null;
+}
+
 function champBool(formData: FormData, nom: string): 0 | 1 {
   return formData.get(nom) ? 1 : 0;
 }
@@ -357,6 +363,8 @@ function extraireRecherche(formData: FormData) {
     quartierIds: Array.from(new Set(quartierIds)),
     surfaceSolMin: champNombre(formData, "rechSurfaceMin"),
     surfaceSolMax: champNombre(formData, "rechSurfaceMax"),
+    chambresMin: champEntier(formData, "rechChambresMin"),
+    chambresMax: champEntier(formData, "rechChambresMax"),
     budgetMax: champNombre(formData, "rechBudgetMax"),
     // Facultatif : vide = pas de souhait sur l'état (décision du 26 octobre).
     etatBienRecherche: champListe(formData, "rechEtat", ETATS_RECHERCHE),
@@ -372,6 +380,9 @@ function verifierRecherche(r: ChampsRecherche) {
   if (r.surfaceSolMin !== null && r.surfaceSolMax !== null && r.surfaceSolMin > r.surfaceSolMax) {
     throw new Error("La surface minimum dépasse la surface maximum.");
   }
+  if (r.chambresMin !== null && r.chambresMax !== null && r.chambresMin > r.chambresMax) {
+    throw new Error("Le nombre de chambres minimum dépasse le maximum.");
+  }
 }
 
 function rechercheRenseignee(r: ChampsRecherche): boolean {
@@ -380,6 +391,8 @@ function rechercheRenseignee(r: ChampsRecherche): boolean {
     r.quartierIds.length > 0 ||
     r.surfaceSolMin !== null ||
     r.surfaceSolMax !== null ||
+    r.chambresMin !== null ||
+    r.chambresMax !== null ||
     r.budgetMax !== null ||
     r.etatBienRecherche ||
     r.messageProspect ||
@@ -404,6 +417,8 @@ function enregistrerRecherche(contactId: string, r: ChampsRecherche) {
     typeBien: r.typeBien,
     surfaceSolMin: r.surfaceSolMin,
     surfaceSolMax: r.surfaceSolMax,
+    chambresMin: r.chambresMin,
+    chambresMax: r.chambresMax,
     budgetMax: r.budgetMax,
     etatBienRecherche: r.etatBienRecherche,
     messageProspect: r.messageProspect,
@@ -416,7 +431,8 @@ function enregistrerRecherche(contactId: string, r: ChampsRecherche) {
       db.prepare(
         `UPDATE Recherche SET
           typeBien = @typeBien, quartierId = NULL, surfaceSolMin = @surfaceSolMin,
-          surfaceSolMax = @surfaceSolMax, budgetMax = @budgetMax,
+          surfaceSolMax = @surfaceSolMax, chambresMin = @chambresMin,
+          chambresMax = @chambresMax, budgetMax = @budgetMax,
           etatBienRecherche = @etatBienRecherche, messageProspect = @messageProspect,
           criteresLibres = @criteresLibres, statut = @statut
         WHERE id = @id`
@@ -424,10 +440,10 @@ function enregistrerRecherche(contactId: string, r: ChampsRecherche) {
     } else {
       db.prepare(
         `INSERT INTO Recherche (
-          id, contactId, typeBien, quartierId, surfaceSolMin, surfaceSolMax, budgetMax,
+          id, contactId, typeBien, quartierId, surfaceSolMin, surfaceSolMax, chambresMin, chambresMax, budgetMax,
           etatBienRecherche, messageProspect, criteresLibres, statut
         ) VALUES (
-          @id, @contactId, @typeBien, NULL, @surfaceSolMin, @surfaceSolMax, @budgetMax,
+          @id, @contactId, @typeBien, NULL, @surfaceSolMin, @surfaceSolMax, @chambresMin, @chambresMax, @budgetMax,
           @etatBienRecherche, @messageProspect, @criteresLibres, @statut
         )`
       ).run(valeurs);

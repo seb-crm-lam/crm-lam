@@ -218,6 +218,8 @@ model Recherche {
   quartierId               String?
   quartier                 Quartier? @relation(fields: [quartierId], references: [id])
   surfaceSolMin            Float?
+  chambresMin              Int?
+  chambresMax              Int?
   budgetMax                Float?
   modeExploitationRecherche String?
   messageProspect          String? // ce que le visiteur écrit lui-même

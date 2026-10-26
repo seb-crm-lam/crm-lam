@@ -9,6 +9,7 @@ import {
 import {
   formatDh,
   formatFourchetteM2,
+  formatFourchetteChambres,
   ETAT_RECHERCHE_LABELS,
   formatDate,
   formatDateHeure,
@@ -218,6 +219,8 @@ export default function FicheContactPage({ params }: { params: { id: string } })
                     <div>{r.quartierNoms.length > 0 ? r.quartierNoms.join(", ") : "Tous"}</div>
                     <div className="label-sm">Surface</div>
                     <div>{formatFourchetteM2(r.surfaceSolMin, r.surfaceSolMax)}</div>
+                    <div className="label-sm">Chambres</div>
+                    <div>{formatFourchetteChambres(r.chambresMin, r.chambresMax)}</div>
                     <div className="label-sm">Budget max.</div>
                     <div>{formatDh(r.budgetMax)}</div>
                     <div className="label-sm">État du bien</div>

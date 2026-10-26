@@ -180,5 +180,9 @@ function migrer(db: Database.Database) {
   const rechercheCols = colonnes("Recherche");
   if (!rechercheCols.has("surfaceSolMax")) executerMigration(db, `ALTER TABLE Recherche ADD COLUMN surfaceSolMax REAL`);
   if (!rechercheCols.has("etatBienRecherche")) executerMigration(db, `ALTER TABLE Recherche ADD COLUMN etatBienRecherche TEXT`);
+  // 26 octobre 2026 — critère « nombre de chambres » (minimum / maximum) de la
+  // grille Recherche. Ajout de colonnes seulement.
+  if (!rechercheCols.has("chambresMin")) executerMigration(db, `ALTER TABLE Recherche ADD COLUMN chambresMin INTEGER`);
+  if (!rechercheCols.has("chambresMax")) executerMigration(db, `ALTER TABLE Recherche ADD COLUMN chambresMax INTEGER`);
   if (!contactApporteur.has("apporteParId")) executerMigration(db, `ALTER TABLE Contact ADD COLUMN apporteParId TEXT REFERENCES Contact(id)`);
 }

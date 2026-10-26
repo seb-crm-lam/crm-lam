@@ -183,6 +183,8 @@ export interface Recherche {
   quartierId: string | null;
   surfaceSolMin: number | null;
   surfaceSolMax: number | null;
+  chambresMin: number | null;
+  chambresMax: number | null;
   budgetMax: number | null;
   etatBienRecherche: EtatBienRecherche | null;
   messageProspect: string | null;

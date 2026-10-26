@@ -426,17 +426,37 @@ function evaluerEtat(bien: Bien, recherche: Recherche): EvaluationEtat {
   return enExploitation ? "exclu" : "ok";
 }
 
-// Combine l'évaluation surface/prix et celle de l'état. Appelée seulement si
-// l'état n'est pas « exclu » (le bien est alors déjà écarté).
+// Nombre de chambres (26 octobre 2026) : fourchette stricte, sans tolérance.
+// Un bien dont le nombre de chambres n'est pas renseigné n'est pas écarté :
+// il ressort « à vérifier ».
+function evaluerChambres(bien: Bien, recherche: Recherche): EvaluationEtat {
+  const chambresMin = recherche.chambresMin ?? null;
+  const chambresMax = recherche.chambresMax ?? null;
+  if (chambresMin === null && chambresMax === null) return "ok";
+  if (bien.chambres === null || bien.chambres === undefined) return "inconnu";
+  if (chambresMin !== null && bien.chambres < chambresMin) return "exclu";
+  if (chambresMax !== null && bien.chambres > chambresMax) return "exclu";
+  return "ok";
+}
+
+const RAISON_CHAMBRES_DIFFERENT = "Nombre de chambres hors fourchette";
+
+// Combine l'évaluation surface/prix et celles de l'état et des chambres.
+// Appelée seulement si aucune des deux n'est « exclu » (le bien est alors
+// déjà écarté).
 function conclure(
   evaluation: EvaluationSurfacePrix,
-  etat: EvaluationEtat
+  etat: EvaluationEtat,
+  chambres: EvaluationEtat = "ok"
 ): { correspondance: NiveauCorrespondance; raison: string } {
   const correspondance = NIVEAU_LABEL[evaluation.niveau];
-  if (etat !== "inconnu") return { correspondance, raison: evaluation.raison };
-  const raisonEtat = "État du bien non renseigné";
-  if (evaluation.niveau === 0) return { correspondance: "a_verifier", raison: raisonEtat };
-  return { correspondance, raison: `${evaluation.raison} · ${raisonEtat}` };
+  const inconnus: string[] = [];
+  if (etat === "inconnu") inconnus.push("État du bien non renseigné");
+  if (chambres === "inconnu") inconnus.push("Nombre de chambres non renseigné");
+  if (inconnus.length === 0) return { correspondance, raison: evaluation.raison };
+  const raisonInconnus = inconnus.join(" · ");
+  if (evaluation.niveau === 0) return { correspondance: "a_verifier", raison: raisonInconnus };
+  return { correspondance, raison: `${evaluation.raison} · ${raisonInconnus}` };
 }
 
 // Quartiers (plusieurs possibles) : aucun quartier choisi = tous. Un bien d'un
@@ -485,10 +505,18 @@ export function matchBiensPourRecherche(
       continue;
     }
 
+    const chambres = evaluerChambres(bien, recherche);
+    if (chambres === "exclu") {
+      if (options.includeExclus) {
+        results.push({ bien, correspondance: "hors_critere", raison: RAISON_CHAMBRES_DIFFERENT });
+      }
+      continue;
+    }
+
     const evaluation = evaluerSurfacePrix(bien, recherche);
     if (evaluation.niveau === 3 && !options.includeExclus) continue;
 
-    results.push({ bien, ...conclure(evaluation, etat) });
+    results.push({ bien, ...conclure(evaluation, etat, chambres) });
   }
   const ordre: Record<NiveauCorrespondance, number> = { correspond: 0, a_verifier: 1, proche: 2, elargi: 3, hors_critere: 4 };
   return results.sort((a, b) => ordre[a.correspondance] - ordre[b.correspondance]);
@@ -522,9 +550,13 @@ export function matchRecherchesPourBien(
       correspondance = "hors_critere";
       raison = RAISON_ETAT_DIFFERENT;
       exclu = true;
+    } else if (evaluerChambres(bien, recherche) === "exclu") {
+      correspondance = "hors_critere";
+      raison = RAISON_CHAMBRES_DIFFERENT;
+      exclu = true;
     } else {
       const evaluation = evaluerSurfacePrix(bien, recherche);
-      ({ correspondance, raison } = conclure(evaluation, etat));
+      ({ correspondance, raison } = conclure(evaluation, etat, evaluerChambres(bien, recherche)));
       exclu = evaluation.niveau === 3;
     }
     if (exclu && !options.includeExclus) continue;

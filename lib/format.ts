@@ -65,6 +65,16 @@ export function formatFourchetteM2(min: number | null | undefined, max: number |
   return "—";
 }
 
+// Fourchette de chambres d'une recherche : « 3 – 5 chambres », « au moins 3 chambres »…
+export function formatFourchetteChambres(min: number | null | undefined, max: number | null | undefined): string {
+  const aMin = min !== null && min !== undefined;
+  const aMax = max !== null && max !== undefined;
+  if (aMin && aMax) return min === max ? `${min} chambre${min > 1 ? "s" : ""}` : `${min} – ${max} chambres`;
+  if (aMin) return `au moins ${min} chambre${min > 1 ? "s" : ""}`;
+  if (aMax) return `${max} chambre${max > 1 ? "s" : ""} maximum`;
+  return "—";
+}
+
 export const TRANSACTION_LABELS: Record<string, string> = {
   vente: "Vente",
   location_longue_duree: "Location longue durée",
