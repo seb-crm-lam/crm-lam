@@ -58,8 +58,26 @@ function mapContact(row: any): Contact {
   } as Contact;
 }
 
+// Quartiers d'une recherche : table RechercheQuartier (26 octobre 2026). Repli
+// sur l'ancien champ quartierId pour les recherches créées avant ce changement ;
+// à l'enregistrement, ce champ est vidé pour que le repli ne ressuscite pas un
+// quartier décoché.
 function mapRecherche(row: any): Recherche {
-  return { ...row } as Recherche;
+  let quartiers = db
+    .prepare(
+      `SELECT q.id, q.nom FROM RechercheQuartier rq
+       JOIN Quartier q ON q.id = rq.quartierId
+       WHERE rq.rechercheId = ? ORDER BY q.nom ASC`
+    )
+    .all(row.id) as { id: string; nom: string }[];
+  if (quartiers.length === 0 && row.quartierId) {
+    quartiers = db.prepare(`SELECT id, nom FROM Quartier WHERE id = ?`).all(row.quartierId) as { id: string; nom: string }[];
+  }
+  return {
+    ...row,
+    quartierIds: quartiers.map((q) => q.id),
+    quartierNoms: quartiers.map((q) => q.nom),
+  } as Recherche;
 }
 
 function mapDemande(row: any): Demande {
@@ -235,11 +253,7 @@ export function getContact(id: string): Contact | undefined {
 
 export function getRecherchesForContact(contactId: string): Recherche[] {
   return db
-    .prepare(
-      `SELECT r.*, q.nom as quartierNom FROM Recherche r
-       LEFT JOIN Quartier q ON q.id = r.quartierId
-       WHERE r.contactId = ? ORDER BY r.createdAt DESC`
-    )
+    .prepare(`SELECT * FROM Recherche WHERE contactId = ? ORDER BY createdAt DESC`)
     .all(contactId)
     .map(mapRecherche);
 }
@@ -302,7 +316,7 @@ export function getEvenementsForBien(bienId: string): Evenement[] {
 // prix).
 // ---------------------------------------------------------------------------
 
-export type NiveauCorrespondance = "correspond" | "proche" | "elargi" | "hors_critere";
+export type NiveauCorrespondance = "correspond" | "a_verifier" | "proche" | "elargi" | "hors_critere";
 
 export interface MatchResult {
   bien: Bien;
@@ -333,14 +347,23 @@ interface EvaluationSurfacePrix {
 }
 
 function evaluerSurfacePrix(bien: Bien, recherche: Recherche): EvaluationSurfacePrix {
-  let niveauSurface: Niveau = 0;
+  let niveauSousMin: Niveau = 0;
+  let niveauAuDessusMax: Niveau = 0;
   let bienPlusGrand = false;
 
-  if (recherche.surfaceSolMin && bien.surfaceSol) {
-    const ecart = (recherche.surfaceSolMin - bien.surfaceSol) / recherche.surfaceSolMin;
-    niveauSurface = niveauEcart(ecart);
-    bienPlusGrand = bien.surfaceSol > recherche.surfaceSolMin;
+  // Fourchette de surface (26 octobre 2026) : mêmes paliers de tolérance de
+  // chaque côté — sous le minimum, au-dessus du maximum.
+  if (bien.surfaceSol) {
+    if (recherche.surfaceSolMin) {
+      niveauSousMin = niveauEcart((recherche.surfaceSolMin - bien.surfaceSol) / recherche.surfaceSolMin);
+      bienPlusGrand = bien.surfaceSol > recherche.surfaceSolMin;
+    }
+    if (recherche.surfaceSolMax) {
+      niveauAuDessusMax = niveauEcart((bien.surfaceSol - recherche.surfaceSolMax) / recherche.surfaceSolMax);
+      if (niveauAuDessusMax > 0) bienPlusGrand = false;
+    }
   }
+  const niveauSurface = Math.max(niveauSousMin, niveauAuDessusMax) as Niveau;
 
   let niveauPrix: Niveau = 0;
   if (recherche.budgetMax && bien.prixVente) {
@@ -356,12 +379,21 @@ function evaluerSurfacePrix(bien: Bien, recherche: Recherche): EvaluationSurface
   const niveau = Math.max(niveauSurface, niveauPrix) as Niveau;
 
   const raisons: string[] = [];
-  if (niveauSurface >= 1) {
+  if (niveauSousMin >= 1) {
     raisons.push(
-      niveauSurface === 3
+      niveauSousMin === 3
         ? "Surface insuffisante"
-        : `Surface ${niveauSurface === 2 ? "nettement " : "légèrement "}sous le minimum (${
-            niveauSurface === 2 ? "15-30 %" : "0-15 %"
+        : `Surface ${niveauSousMin === 2 ? "nettement " : "légèrement "}sous le minimum (${
+            niveauSousMin === 2 ? "15-30 %" : "0-15 %"
+          })`
+    );
+  }
+  if (niveauAuDessusMax >= 1) {
+    raisons.push(
+      niveauAuDessusMax === 3
+        ? "Surface trop grande"
+        : `Surface ${niveauAuDessusMax === 2 ? "nettement " : "légèrement "}au-dessus du maximum (${
+            niveauAuDessusMax === 2 ? "15-30 %" : "0-15 %"
           })`
     );
   }
@@ -380,6 +412,43 @@ function evaluerSurfacePrix(bien: Bien, recherche: Recherche): EvaluationSurface
     raison: raisons.length > 0 ? raisons.join(" · ") : "Correspond aux critères",
   };
 }
+
+// État du bien (26 octobre 2026) : le client souhaite « en exploitation » ou
+// « autre » (à rénover, semi-fini, à démolir). Un bien sans état renseigné
+// n'est pas écarté : il ressort « à vérifier ».
+type EvaluationEtat = "ok" | "exclu" | "inconnu";
+
+function evaluerEtat(bien: Bien, recherche: Recherche): EvaluationEtat {
+  if (!recherche.etatBienRecherche) return "ok";
+  if (!bien.etatBien) return "inconnu";
+  const enExploitation = bien.etatBien === "en_exploitation";
+  if (recherche.etatBienRecherche === "en_exploitation") return enExploitation ? "ok" : "exclu";
+  return enExploitation ? "exclu" : "ok";
+}
+
+// Combine l'évaluation surface/prix et celle de l'état. Appelée seulement si
+// l'état n'est pas « exclu » (le bien est alors déjà écarté).
+function conclure(
+  evaluation: EvaluationSurfacePrix,
+  etat: EvaluationEtat
+): { correspondance: NiveauCorrespondance; raison: string } {
+  const correspondance = NIVEAU_LABEL[evaluation.niveau];
+  if (etat !== "inconnu") return { correspondance, raison: evaluation.raison };
+  const raisonEtat = "État du bien non renseigné";
+  if (evaluation.niveau === 0) return { correspondance: "a_verifier", raison: raisonEtat };
+  return { correspondance, raison: `${evaluation.raison} · ${raisonEtat}` };
+}
+
+// Quartiers (plusieurs possibles) : aucun quartier choisi = tous. Un bien d'un
+// sous-quartier correspond à la recherche de son quartier parent.
+function quartierCorrespond(bien: Bien, recherche: Recherche): boolean {
+  if (recherche.quartierIds.length === 0) return true;
+  return recherche.quartierIds.some(
+    (id) => bien.quartierId === id || isSousQuartierDe(bien.quartierId, id)
+  );
+}
+
+const RAISON_ETAT_DIFFERENT = "État du bien différent du souhait";
 
 export interface OptionsRapprochement {
   // Par défaut, les biens hors critère (type différent, hors quartier, ou
@@ -401,13 +470,17 @@ export function matchBiensPourRecherche(
       }
       continue;
     }
-    if (
-      recherche.quartierId &&
-      bien.quartierId !== recherche.quartierId &&
-      !isSousQuartierDe(bien.quartierId, recherche.quartierId)
-    ) {
+    if (!quartierCorrespond(bien, recherche)) {
       if (options.includeExclus) {
         results.push({ bien, correspondance: "hors_critere", raison: "Hors quartier recherché" });
+      }
+      continue;
+    }
+
+    const etat = evaluerEtat(bien, recherche);
+    if (etat === "exclu") {
+      if (options.includeExclus) {
+        results.push({ bien, correspondance: "hors_critere", raison: RAISON_ETAT_DIFFERENT });
       }
       continue;
     }
@@ -415,13 +488,9 @@ export function matchBiensPourRecherche(
     const evaluation = evaluerSurfacePrix(bien, recherche);
     if (evaluation.niveau === 3 && !options.includeExclus) continue;
 
-    results.push({
-      bien,
-      correspondance: NIVEAU_LABEL[evaluation.niveau],
-      raison: evaluation.raison,
-    });
+    results.push({ bien, ...conclure(evaluation, etat) });
   }
-  const ordre: Record<NiveauCorrespondance, number> = { correspond: 0, proche: 1, elargi: 2, hors_critere: 3 };
+  const ordre: Record<NiveauCorrespondance, number> = { correspond: 0, a_verifier: 1, proche: 2, elargi: 3, hors_critere: 4 };
   return results.sort((a, b) => ordre[a.correspondance] - ordre[b.correspondance]);
 }
 
@@ -444,24 +513,24 @@ export function matchRecherchesPourBien(
     let raison = "Correspond aux critères";
     let exclu = false;
 
-    if (
-      recherche.quartierId &&
-      bien.quartierId !== recherche.quartierId &&
-      !isSousQuartierDe(bien.quartierId, recherche.quartierId)
-    ) {
+    const etat = evaluerEtat(bien, recherche);
+    if (!quartierCorrespond(bien, recherche)) {
       correspondance = "hors_critere";
       raison = "Hors quartier recherché";
       exclu = true;
+    } else if (etat === "exclu") {
+      correspondance = "hors_critere";
+      raison = RAISON_ETAT_DIFFERENT;
+      exclu = true;
     } else {
       const evaluation = evaluerSurfacePrix(bien, recherche);
-      correspondance = NIVEAU_LABEL[evaluation.niveau];
-      raison = evaluation.raison;
+      ({ correspondance, raison } = conclure(evaluation, etat));
       exclu = evaluation.niveau === 3;
     }
     if (exclu && !options.includeExclus) continue;
     results.push({ bien, recherche, correspondance, raison });
   }
-  const ordre: Record<NiveauCorrespondance, number> = { correspond: 0, proche: 1, elargi: 2, hors_critere: 3 };
+  const ordre: Record<NiveauCorrespondance, number> = { correspond: 0, a_verifier: 1, proche: 2, elargi: 3, hors_critere: 4 };
   return results.sort((a, b) => ordre[a.correspondance] - ordre[b.correspondance]);
 }
 

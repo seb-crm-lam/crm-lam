@@ -7,7 +7,7 @@ import {
   matchRecherchesPourBien,
   type NiveauCorrespondance,
 } from "@/lib/repo";
-import { formatDh, formatM2, TYPE_BIEN_LABELS } from "@/lib/format";
+import { formatDh, formatFourchetteM2, ETAT_RECHERCHE_LABELS, TYPE_BIEN_LABELS } from "@/lib/format";
 import EnvoyerWhatsapp from "@/components/EnvoyerWhatsapp";
 import { getBienPrestations } from "@/lib/repo";
 import { preparerEnvoi, libelleCourt } from "@/lib/documents/fiche-client";
@@ -39,6 +39,7 @@ function propsEnvoi(bien: Bien, contact: Contact) {
 
 function correspondancePill(c: NiveauCorrespondance) {
   if (c === "correspond") return <span className="pill pill-green">Correspond</span>;
+  if (c === "a_verifier") return <span className="pill pill-neutral">À vérifier</span>;
   if (c === "proche") return <span className="pill pill-accent">Proche</span>;
   if (c === "elargi") return <span className="pill pill-red">Élargi</span>;
   return <span className="pill pill-neutral">Hors critère</span>;
@@ -153,12 +154,16 @@ export default function RapprochementPage({
                   <div className="grid grid-cols-2 gap-y-2 text-sm">
                     <div className="label-sm">Type</div>
                     <div>{recherche.typeBien ? TYPE_BIEN_LABELS[recherche.typeBien] : "—"}</div>
-                    <div className="label-sm">Quartier</div>
-                    <div>{recherche.quartierNom ?? "—"}</div>
-                    <div className="label-sm">Surface min.</div>
-                    <div>{formatM2(recherche.surfaceSolMin)}</div>
+                    <div className="label-sm">Quartiers</div>
+                    <div>{recherche.quartierNoms.length > 0 ? recherche.quartierNoms.join(", ") : "Tous"}</div>
+                    <div className="label-sm">Surface</div>
+                    <div>{formatFourchetteM2(recherche.surfaceSolMin, recherche.surfaceSolMax)}</div>
                     <div className="label-sm">Budget max.</div>
                     <div>{formatDh(recherche.budgetMax)}</div>
+                    <div className="label-sm">État du bien</div>
+                    <div>
+                      {recherche.etatBienRecherche ? ETAT_RECHERCHE_LABELS[recherche.etatBienRecherche] : "—"}
+                    </div>
                   </div>
                 </div>
 

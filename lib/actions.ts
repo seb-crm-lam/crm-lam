@@ -337,9 +337,117 @@ function verifierChampsContact(champs: { nom: string; telephone: string | null }
   if (!champs.telephone) throw new Error("Le téléphone est obligatoire.");
 }
 
+// ---------------------------------------------------------------------------
+// Grille « Recherche » d'un contact (26 octobre 2026) — emplacement A : un
+// bloc dans la fiche contact. La fiche porte UNE recherche, la plus récente ;
+// les recherches plus anciennes, s'il y en a, ne sont pas touchées.
+// ---------------------------------------------------------------------------
+
+const TYPES_BIEN_RECHERCHE = ["riad", "villa", "appartement", "terrain", "fonds_commerce"];
+const ETATS_RECHERCHE = ["en_exploitation", "autre"];
+const STATUTS_RECHERCHE = ["actif", "satisfait", "abandonne"];
+
+function extraireRecherche(formData: FormData) {
+  const quartierIds = formData
+    .getAll("rechQuartierIds")
+    .map((v) => String(v))
+    .filter((id) => id && db.prepare(`SELECT 1 FROM Quartier WHERE id = ?`).get(id));
+  return {
+    typeBien: champListe(formData, "rechTypeBien", TYPES_BIEN_RECHERCHE),
+    quartierIds: Array.from(new Set(quartierIds)),
+    surfaceSolMin: champNombre(formData, "rechSurfaceMin"),
+    surfaceSolMax: champNombre(formData, "rechSurfaceMax"),
+    budgetMax: champNombre(formData, "rechBudgetMax"),
+    // Facultatif : vide = pas de souhait sur l'état (décision du 26 octobre).
+    etatBienRecherche: champListe(formData, "rechEtat", ETATS_RECHERCHE),
+    messageProspect: champTexte(formData, "rechMessage"),
+    criteresLibres: champTexte(formData, "rechCriteres"),
+    statut: champListe(formData, "rechStatut", STATUTS_RECHERCHE) ?? "actif",
+  };
+}
+
+type ChampsRecherche = ReturnType<typeof extraireRecherche>;
+
+function verifierRecherche(r: ChampsRecherche) {
+  if (r.surfaceSolMin !== null && r.surfaceSolMax !== null && r.surfaceSolMin > r.surfaceSolMax) {
+    throw new Error("La surface minimum dépasse la surface maximum.");
+  }
+}
+
+function rechercheRenseignee(r: ChampsRecherche): boolean {
+  return !!(
+    r.typeBien ||
+    r.quartierIds.length > 0 ||
+    r.surfaceSolMin !== null ||
+    r.surfaceSolMax !== null ||
+    r.budgetMax !== null ||
+    r.etatBienRecherche ||
+    r.messageProspect ||
+    r.criteresLibres
+  );
+}
+
+function enregistrerRecherche(contactId: string, r: ChampsRecherche) {
+  const existante = db
+    .prepare(`SELECT id FROM Recherche WHERE contactId = ? ORDER BY createdAt DESC LIMIT 1`)
+    .get(contactId) as { id: string } | undefined;
+
+  // Rien de saisi et pas de recherche existante : on ne crée pas de ligne vide.
+  if (!existante && !rechercheRenseignee(r)) return;
+
+  const id = existante?.id ?? randomUUID();
+  // quartierId (ancien champ à un seul quartier) est vidé : les quartiers
+  // vivent désormais dans RechercheQuartier.
+  const valeurs = {
+    id,
+    contactId,
+    typeBien: r.typeBien,
+    surfaceSolMin: r.surfaceSolMin,
+    surfaceSolMax: r.surfaceSolMax,
+    budgetMax: r.budgetMax,
+    etatBienRecherche: r.etatBienRecherche,
+    messageProspect: r.messageProspect,
+    criteresLibres: r.criteresLibres,
+    statut: r.statut,
+  };
+
+  const ecrire = db.transaction(() => {
+    if (existante) {
+      db.prepare(
+        `UPDATE Recherche SET
+          typeBien = @typeBien, quartierId = NULL, surfaceSolMin = @surfaceSolMin,
+          surfaceSolMax = @surfaceSolMax, budgetMax = @budgetMax,
+          etatBienRecherche = @etatBienRecherche, messageProspect = @messageProspect,
+          criteresLibres = @criteresLibres, statut = @statut
+        WHERE id = @id`
+      ).run(valeurs);
+    } else {
+      db.prepare(
+        `INSERT INTO Recherche (
+          id, contactId, typeBien, quartierId, surfaceSolMin, surfaceSolMax, budgetMax,
+          etatBienRecherche, messageProspect, criteresLibres, statut
+        ) VALUES (
+          @id, @contactId, @typeBien, NULL, @surfaceSolMin, @surfaceSolMax, @budgetMax,
+          @etatBienRecherche, @messageProspect, @criteresLibres, @statut
+        )`
+      ).run(valeurs);
+      db.prepare(
+        `INSERT INTO Evenement (id, contactId, bienId, typeEvenement, detail, auteur)
+         VALUES (?, ?, NULL, 'recherche_creee', 'Recherche créée depuis la fiche contact', 'Sébastien')`
+      ).run(randomUUID(), contactId);
+    }
+    db.prepare(`DELETE FROM RechercheQuartier WHERE rechercheId = ?`).run(id);
+    const insQuartier = db.prepare(`INSERT INTO RechercheQuartier (rechercheId, quartierId) VALUES (?, ?)`);
+    for (const quartierId of r.quartierIds) insQuartier.run(id, quartierId);
+  });
+  ecrire();
+}
+
 export async function createContact(formData: FormData) {
   const champs = extraireChampsContact(formData);
   verifierChampsContact(champs);
+  const recherche = extraireRecherche(formData);
+  verifierRecherche(recherche);
   const id = randomUUID();
 
   db.prepare(
@@ -357,6 +465,7 @@ export async function createContact(formData: FormData) {
       datetime('now')
     )`
   ).run({ id, ...champs });
+  enregistrerRecherche(id, recherche);
 
   revalidatePath("/contacts");
   redirect(`/contacts/${id}`);
@@ -365,6 +474,8 @@ export async function createContact(formData: FormData) {
 export async function updateContact(contactId: string, formData: FormData) {
   const champs = extraireChampsContact(formData, contactId);
   verifierChampsContact(champs);
+  const recherche = extraireRecherche(formData);
+  verifierRecherche(recherche);
 
   db.prepare(
     `UPDATE Contact SET
@@ -380,8 +491,10 @@ export async function updateContact(contactId: string, formData: FormData) {
       apporteParId = @apporteParId
     WHERE id = @id`
   ).run({ id: contactId, ...champs });
+  enregistrerRecherche(contactId, recherche);
 
   revalidatePath(`/contacts/${contactId}`);
+  revalidatePath("/rapprochement");
   redirect(`/contacts/${contactId}`);
 }
 

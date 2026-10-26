@@ -49,6 +49,22 @@ export const TYPE_BIEN_LABELS: Record<string, string> = {
   fonds_commerce: "Fonds de commerce",
 };
 
+// Souhait d'état du bien dans une recherche (26 octobre 2026).
+export const ETAT_RECHERCHE_LABELS: Record<string, string> = {
+  en_exploitation: "En exploitation",
+  autre: "Autre (à rénover, semi-fini ou à démolir)",
+};
+
+// Fourchette de surface d'une recherche : « 80 – 100 m² », « à partir de 80 m² »…
+export function formatFourchetteM2(min: number | null | undefined, max: number | null | undefined): string {
+  const aMin = min !== null && min !== undefined;
+  const aMax = max !== null && max !== undefined;
+  if (aMin && aMax) return `${min} – ${max} m²`;
+  if (aMin) return `à partir de ${min} m²`;
+  if (aMax) return `jusqu'à ${max} m²`;
+  return "—";
+}
+
 export const TRANSACTION_LABELS: Record<string, string> = {
   vente: "Vente",
   location_longue_duree: "Location longue durée",

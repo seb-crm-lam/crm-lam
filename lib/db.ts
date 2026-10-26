@@ -166,5 +166,12 @@ function migrer(db: Database.Database) {
   if (!contactApporteur.has("apportCategorie")) executerMigration(db, `ALTER TABLE Contact ADD COLUMN apportCategorie TEXT`);
   if (!contactApporteur.has("presenteParId")) executerMigration(db, `ALTER TABLE Contact ADD COLUMN presenteParId TEXT REFERENCES Contact(id)`);
   if (!contactApporteur.has("notePresentation")) executerMigration(db, `ALTER TABLE Contact ADD COLUMN notePresentation TEXT`);
+  // 26 octobre 2026 — grille « Recherche » d'un contact : fourchette de surface
+  // (minimum déjà présent, maximum ajouté) et état du bien souhaité
+  // (en_exploitation | autre). Ajout de colonnes seulement ; les colonnes
+  // quartierId et modeExploitationRecherche restent en base, inutilisées.
+  const rechercheCols = colonnes("Recherche");
+  if (!rechercheCols.has("surfaceSolMax")) executerMigration(db, `ALTER TABLE Recherche ADD COLUMN surfaceSolMax REAL`);
+  if (!rechercheCols.has("etatBienRecherche")) executerMigration(db, `ALTER TABLE Recherche ADD COLUMN etatBienRecherche TEXT`);
   if (!contactApporteur.has("apporteParId")) executerMigration(db, `ALTER TABLE Contact ADD COLUMN apporteParId TEXT REFERENCES Contact(id)`);
 }

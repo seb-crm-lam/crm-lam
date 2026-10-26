@@ -3,6 +3,8 @@
 
 export type TypeBien = "riad" | "villa" | "appartement" | "terrain" | "fonds_commerce";
 export type TransactionType = "vente" | "location_longue_duree";
+// Souhait d'un client : « en exploitation » ou « autre » (à rénover, semi-fini, à démolir).
+export type EtatBienRecherche = "en_exploitation" | "autre";
 export type EtatBien = "a_renover" | "en_exploitation" | "semi_fini" | "a_demolir" | null;
 export type DiffusionEtat = "brouillon" | "off_market" | "publie" | "publie_hors_catalogue" | "archive";
 export type StatutCommercial = "disponible" | "sous_promesse" | "vendu" | "loue" | "retire";
@@ -176,15 +178,19 @@ export interface Recherche {
   id: string;
   contactId: string;
   typeBien: string | null;
+  // Anciennes données : un seul quartier. Depuis le 26 octobre 2026, les
+  // quartiers recherchés sont dans quartierIds (table RechercheQuartier).
   quartierId: string | null;
   surfaceSolMin: number | null;
+  surfaceSolMax: number | null;
   budgetMax: number | null;
-  modeExploitationRecherche: string | null;
+  etatBienRecherche: EtatBienRecherche | null;
   messageProspect: string | null;
   criteresLibres: string | null;
   statut: string;
   createdAt: string;
-  quartierNom?: string | null;
+  quartierIds: string[];
+  quartierNoms: string[];
 }
 
 export interface PieceDossier {

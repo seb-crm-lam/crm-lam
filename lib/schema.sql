@@ -180,6 +180,13 @@ CREATE TABLE IF NOT EXISTS Recherche (
   createdAt TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- 26 octobre 2026 — une recherche peut viser plusieurs quartiers.
+CREATE TABLE IF NOT EXISTS RechercheQuartier (
+  rechercheId TEXT NOT NULL REFERENCES Recherche(id),
+  quartierId TEXT NOT NULL REFERENCES Quartier(id),
+  PRIMARY KEY (rechercheId, quartierId)
+);
+
 CREATE TABLE IF NOT EXISTS BonVisite (
   id TEXT PRIMARY KEY,
   reference TEXT NOT NULL UNIQUE,

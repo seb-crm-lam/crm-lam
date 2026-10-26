@@ -8,7 +8,8 @@ import {
 } from "@/lib/repo";
 import {
   formatDh,
-  formatM2,
+  formatFourchetteM2,
+  ETAT_RECHERCHE_LABELS,
   formatDate,
   formatDateHeure,
   TYPE_BIEN_LABELS,
@@ -212,12 +213,14 @@ export default function FicheContactPage({ params }: { params: { id: string } })
                   <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm [overflow-wrap:anywhere]">
                     <div className="label-sm">Type de bien</div>
                     <div>{r.typeBien ? TYPE_BIEN_LABELS[r.typeBien] ?? r.typeBien : "—"}</div>
-                    <div className="label-sm">Quartier</div>
-                    <div>{r.quartierNom ?? "—"}</div>
-                    <div className="label-sm">Surface min.</div>
-                    <div>{formatM2(r.surfaceSolMin)}</div>
+                    <div className="label-sm">Quartiers</div>
+                    <div>{r.quartierNoms.length > 0 ? r.quartierNoms.join(", ") : "Tous"}</div>
+                    <div className="label-sm">Surface</div>
+                    <div>{formatFourchetteM2(r.surfaceSolMin, r.surfaceSolMax)}</div>
                     <div className="label-sm">Budget max.</div>
                     <div>{formatDh(r.budgetMax)}</div>
+                    <div className="label-sm">État du bien</div>
+                    <div>{r.etatBienRecherche ? ETAT_RECHERCHE_LABELS[r.etatBienRecherche] : "—"}</div>
                   </div>
                   {r.messageProspect && (
                     <div className="text-sm italic border-l-2 border-border pl-3 text-muted">
