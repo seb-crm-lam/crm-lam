@@ -5,11 +5,11 @@ import type { Contact } from "@/lib/types";
 
 // Liste validée par Seb le 8 septembre (CRM_LAM_champs_bien_et_contact.md §10) ;
 // le 26 octobre 2026, « Nouveau » est remplacé par « Apporteur » (un apporteur
-// de biens n'avait aucune rubrique où se saisir).
+// de biens n'avait aucune rubrique où se saisir) et « En cours » est fondu dans
+// « En recherche ».
 const STATUT_OPTIONS = [
   { value: "apporteur", label: "Apporteur" },
   { value: "en_recherche", label: "En recherche" },
-  { value: "en_cours", label: "En cours" },
   { value: "abouti", label: "Abouti" },
   { value: "inactif", label: "Inactif" },
 ];
@@ -70,9 +70,6 @@ export default function ContactForm({ contact }: { contact?: Contact }) {
           </Champ>
           <Champ label="Statut">
             <select name="statut" defaultValue={contact?.statut ?? "en_recherche"} className="input">
-              {/* Un contact déjà enregistré « Nouveau » garde son statut tant que
-                  Seb n'en choisit pas un autre : rien n'est changé en silence. */}
-              {contact?.statut === "nouveau" && <option value="nouveau">Nouveau (ancien statut)</option>}
               {STATUT_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}

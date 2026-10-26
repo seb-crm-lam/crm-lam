@@ -166,6 +166,13 @@ function migrer(db: Database.Database) {
   if (!contactApporteur.has("apportCategorie")) executerMigration(db, `ALTER TABLE Contact ADD COLUMN apportCategorie TEXT`);
   if (!contactApporteur.has("presenteParId")) executerMigration(db, `ALTER TABLE Contact ADD COLUMN presenteParId TEXT REFERENCES Contact(id)`);
   if (!contactApporteur.has("notePresentation")) executerMigration(db, `ALTER TABLE Contact ADD COLUMN notePresentation TEXT`);
+  // 26 octobre 2026 — statuts de contact (décision de Seb) : les contacts
+  // « Nouveau » deviennent « Apporteur » ; « En cours » est fondu dans
+  // « En recherche ». Seul le statut change ; idempotent (rien à faire une
+  // fois passé).
+  db.prepare(`UPDATE Contact SET statut = 'apporteur' WHERE statut = 'nouveau'`).run();
+  db.prepare(`UPDATE Contact SET statut = 'en_recherche' WHERE statut = 'en_cours'`).run();
+
   // 26 octobre 2026 — grille « Recherche » d'un contact : fourchette de surface
   // (minimum déjà présent, maximum ajouté) et état du bien souhaité
   // (en_exploitation | autre). Ajout de colonnes seulement ; les colonnes

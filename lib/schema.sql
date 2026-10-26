@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS Contact (
   adressePostale TEXT,
   agitPourLeCompteDe TEXT,
   formeAdresse TEXT NOT NULL DEFAULT 'vous',
-  statut TEXT NOT NULL DEFAULT 'nouveau',
+  statut TEXT NOT NULL DEFAULT 'en_recherche',
   motifDeSortie TEXT,
   consentementProspection INTEGER NOT NULL DEFAULT 0,
   dateConsentement TEXT,

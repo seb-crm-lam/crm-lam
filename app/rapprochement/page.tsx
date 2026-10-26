@@ -59,7 +59,7 @@ export default function RapprochementPage({
 }) {
   const mode = searchParams.mode === "bien" ? "bien" : "recherche";
   const voirExclus = searchParams.exclus === "1";
-  const contacts = listContacts().filter((c) => c.statut === "en_recherche" || c.statut === "nouveau");
+  const contacts = listContacts().filter((c) => c.statut === "en_recherche");
   const biens = listBiens().filter((b) => b.diffusionEtat !== "archive");
 
   const contactId = searchParams.contactId ?? contacts[0]?.id;
