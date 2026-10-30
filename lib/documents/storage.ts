@@ -64,3 +64,12 @@ export async function enregistrerPhotoPapier(sousDossier: string, fichier: File 
   fs.writeFileSync(chemin, buffer);
   return path.join("data", "documents", sousDossier, nomFichier);
 }
+
+// Enregistre un fichier déjà traité (ex. photo de bien convertie en JPEG).
+// Retourne le chemin relatif stocké en base.
+export function enregistrerFichier(sousDossier: string, extension: string, contenu: Buffer): string {
+  const dossier = assurerDossier(sousDossier);
+  const nomFichier = `${randomUUID()}.${extension.replace(/[^a-z0-9]/gi, "").toLowerCase() || "bin"}`;
+  fs.writeFileSync(path.join(dossier, nomFichier), contenu);
+  return path.join("data", "documents", sousDossier, nomFichier);
+}

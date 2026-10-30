@@ -39,7 +39,14 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export default function FicheBienPage({ params }: { params: { id: string } }) {
+export default function FicheBienPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams?: { photosRefusees?: string };
+}) {
+  const photosRefusees = searchParams?.photosRefusees ? searchParams.photosRefusees.split("|").filter(Boolean) : [];
   const bien = getBien(params.id);
   if (!bien) notFound();
 
@@ -143,6 +150,11 @@ export default function FicheBienPage({ params }: { params: { id: string } }) {
             <div className="flex items-center justify-between">
               <span className="label-sm">Photos ({photos.length})</span>
             </div>
+            {photosRefusees.length > 0 && (
+              <p className="text-sm text-red-700" role="alert">
+                ✗ Conversion impossible, à renvoyer : {photosRefusees.join(", ")}
+              </p>
+            )}
             {photos.length === 0 ? (
               <div className="aspect-video flex items-center justify-center text-muted text-sm bg-bg rounded-lg">
                 Aucune photo

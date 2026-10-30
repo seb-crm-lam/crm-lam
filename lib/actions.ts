@@ -6,7 +6,8 @@ import { redirect } from "next/navigation";
 import { db } from "./db";
 import { getBien } from "./repo";
 import { tirerDecalage, distanceMetres, RAYON_MIN_M } from "./geo";
-import { enregistrerPhotoPapier } from "./documents/storage";
+import { enregistrerPhotoPapier, enregistrerFichier } from "./documents/storage";
+import { convertirPhoto } from "./photos/convertir";
 import { PIECES_DOSSIER, blocFondsParDefaut } from "./pieces";
 
 // ---------------------------------------------------------------------------
@@ -661,11 +662,12 @@ export async function annulerEnvoiWhatsapp(evenementId: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Photos d'un bien — upload simple (A30/points à trancher : photos vivent
-// sur l'hébergement, jamais servies directement par le site). Pas de
-// traitement d'image côté serveur ici (recompression/EXIF) : les modules
-// natifs sont indisponibles dans ce prototype, le fichier original est
-// conservé tel quel — à faire évoluer lors du branchement OVH définitif.
+// Photos d'un bien — conversion à l'ajout (30 octobre 2026). Chaque photo
+// (HEIC d'iPhone, JPEG, PNG, WebP) est convertie en JPEG (3000 px max sur le
+// grand côté, qualité 85, EXIF/GPS retirés) ; seul ce JPEG est conservé sur le
+// volume. L'original reste sur l'iPhone / le Mac de Seb. Les photos sont
+// traitées une par une (pic mémoire du décodage HEIC) ; une photo qui échoue
+// n'empêche pas les autres, et la fiche affiche un message.
 // ---------------------------------------------------------------------------
 
 export async function ajouterPhotosBien(bienId: string, formData: FormData) {
@@ -676,18 +678,26 @@ export async function ajouterPhotosBien(bienId: string, formData: FormData) {
     | { m: number | null }
     | undefined;
   let ordre = (dernierOrdre?.m ?? -1) + 1;
+  const echecs: string[] = [];
 
   for (const fichier of fichiers) {
-    const chemin = await enregistrerPhotoPapier(`biens/${bienId}`, fichier);
-    if (!chemin) continue;
-    db.prepare(
-      `INSERT INTO BienPhoto (id, bienId, cheminOriginal, cheminWeb, ordre, exifNettoye)
-       VALUES (@id, @bienId, @chemin, @chemin, @ordre, 0)`
-    ).run({ id: randomUUID(), bienId, chemin, ordre });
-    ordre += 1;
+    try {
+      const converti = await convertirPhoto(Buffer.from(await fichier.arrayBuffer()), fichier.name);
+      const chemin = enregistrerFichier(`biens/${bienId}`, "jpg", converti.buffer);
+      db.prepare(
+        `INSERT INTO BienPhoto (id, bienId, cheminOriginal, cheminWeb, ordre, exifNettoye)
+         VALUES (@id, @bienId, @chemin, @chemin, @ordre, 1)`
+      ).run({ id: randomUUID(), bienId, chemin, ordre });
+      ordre += 1;
+    } catch {
+      echecs.push(fichier.name);
+    }
   }
 
   revalidatePath(`/biens/${bienId}`);
+  if (echecs.length > 0) {
+    redirect(`/biens/${bienId}?photosRefusees=${encodeURIComponent(echecs.join("|"))}`);
+  }
 }
 
 export async function supprimerPhotoBien(photoId: string, bienId: string) {
