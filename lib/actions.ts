@@ -6,7 +6,8 @@ import { redirect } from "next/navigation";
 import { db } from "./db";
 import { getBien } from "./repo";
 import { tirerDecalage, distanceMetres, RAYON_MIN_M } from "./geo";
-import { enregistrerPhotoPapier, enregistrerFichier } from "./documents/storage";
+import fs from "node:fs";
+import { enregistrerPhotoPapier, enregistrerFichier, cheminAbsoluDocument } from "./documents/storage";
 import { convertirPhoto } from "./photos/convertir";
 import { PIECES_DOSSIER, blocFondsParDefaut } from "./pieces";
 
@@ -701,7 +702,28 @@ export async function ajouterPhotosBien(bienId: string, formData: FormData) {
 }
 
 export async function supprimerPhotoBien(photoId: string, bienId: string) {
+  const photo = db.prepare(`SELECT cheminOriginal, cheminWeb FROM BienPhoto WHERE id = ?`).get(photoId) as
+    | { cheminOriginal: string | null; cheminWeb: string | null }
+    | undefined;
   db.prepare(`DELETE FROM BienPhoto WHERE id = ?`).run(photoId);
+  // 30 octobre 2026 : le fichier est aussi effacé du volume, sauf si une autre
+  // photo y fait encore référence (données de démonstration, doublons).
+  if (photo) {
+    for (const chemin of new Set([photo.cheminOriginal, photo.cheminWeb])) {
+      if (!chemin) continue;
+      const encoreUtilise = db
+        .prepare(`SELECT 1 FROM BienPhoto WHERE cheminOriginal = @c OR cheminWeb = @c LIMIT 1`)
+        .get({ c: chemin });
+      const absolu = cheminAbsoluDocument(chemin);
+      if (!encoreUtilise && absolu) {
+        try {
+          fs.unlinkSync(absolu);
+        } catch {
+          // fichier déjà absent : rien à faire
+        }
+      }
+    }
+  }
   revalidatePath(`/biens/${bienId}`);
 }
 
