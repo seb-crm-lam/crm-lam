@@ -213,8 +213,17 @@ function identifiants() {
   return { base, auth: "Basic " + Buffer.from(`${utilisateur}:${motDePasse}`).toString("base64") };
 }
 
-async function appeler(chemin: string, init: RequestInit): Promise<ReponseSite> {
+// Journal des échanges avec le site (30 octobre 2026) : une ligne par appel,
+// lisible dans Railway → Deploy Logs. On n'y écrit jamais les identifiants,
+// ni le contenu de la fiche, ni les chemins de fichiers : seulement la
+// référence, le code de réponse, la durée et ce que le site répond.
+function journaliser(infos: Record<string, unknown>) {
+  console.log("[publication-site] " + JSON.stringify(infos));
+}
+
+async function appeler(chemin: string, init: RequestInit, etiquette: string): Promise<ReponseSite> {
   const { base, auth } = identifiants();
+  const debut = Date.now();
   let res: Response;
   try {
     res = await fetch(base + chemin, {
@@ -223,7 +232,9 @@ async function appeler(chemin: string, init: RequestInit): Promise<ReponseSite> 
       signal: AbortSignal.timeout(120_000),
     });
   } catch (e) {
-    throw new ErreurPublication(`Site injoignable : ${e instanceof Error ? e.message : String(e)}`);
+    const message = e instanceof Error ? e.message : String(e);
+    journaliser({ appel: etiquette, erreur: message, dureeMs: Date.now() - debut });
+    throw new ErreurPublication(`Site injoignable : ${message}`);
   }
   let corps: any = {};
   try {
@@ -231,6 +242,15 @@ async function appeler(chemin: string, init: RequestInit): Promise<ReponseSite> 
   } catch {
     corps = {};
   }
+  journaliser({
+    appel: etiquette,
+    http: res.status,
+    dureeMs: Date.now() - debut,
+    resultat: corps?.resultat ?? null,
+    message: corps?.message ?? null,
+    erreurs: corps?.erreurs ?? null,
+    photosEnEchec: Array.isArray(corps?.photosEnEchec) ? corps.photosEnEchec.length : null,
+  });
   if (res.status === 401 || res.status === 403) {
     throw new ErreurPublication("Le site refuse les identifiants du CRM (compte crm-lam ou mot de passe d'application).");
   }
@@ -250,15 +270,31 @@ async function envoyerPhotos(reference: string, photos: BienPhoto[]) {
   for (let i = 0; i < photos.length; i += PHOTOS_PAR_ENVOI) {
     const lot = photos.slice(i, i + PHOTOS_PAR_ENVOI);
     const form = new FormData();
+    let octets = 0;
     for (const p of lot) {
       const absolu = cheminAbsoluDocument(p.cheminOriginal);
       if (!absolu || !fs.existsSync(absolu)) {
         throw new ErreurPublication(`Photo introuvable sur le disque du CRM : ${nomFichierPhoto(p)}`);
       }
-      form.append("photos[]", new Blob([fs.readFileSync(absolu)]), nomFichierPhoto(p));
+      const contenu = fs.readFileSync(absolu);
+      octets += contenu.length;
+      form.append("photos[]", new Blob([contenu]), nomFichierPhoto(p));
     }
-    const r = await appeler(`/biens/${encodeURIComponent(reference)}/photos`, { method: "POST", body: form });
+    journaliser({ appel: `B ${reference}`, envoi: "photos", fichiers: lot.length, octets });
+    const r = await appeler(
+      `/biens/${encodeURIComponent(reference)}/photos`,
+      { method: "POST", body: form },
+      `B ${reference}`,
+    );
     if (r.http === 422) return r;
+    // Tout autre refus du site (400, 413, 415, 429…) était ignoré : la
+    // finalisation répondait alors « aucune photo traitée » sans dire pourquoi.
+    if (r.http >= 400) {
+      const raison = [r.message, ...(r.erreurs ?? [])].filter(Boolean).join(" · ");
+      throw new ErreurPublication(
+        `Le site a refusé l'envoi des photos (HTTP ${r.http})${raison ? ` : ${raison}` : ""}.`,
+      );
+    }
   }
   return null;
 }
@@ -266,7 +302,7 @@ async function envoyerPhotos(reference: string, photos: BienPhoto[]) {
 async function finaliser(reference: string): Promise<ReponseSite> {
   const debut = Date.now();
   for (;;) {
-    const r = await appeler(`/biens/${encodeURIComponent(reference)}/finaliser`, { method: "POST" });
+    const r = await appeler(`/biens/${encodeURIComponent(reference)}/finaliser`, { method: "POST" }, `C ${reference}`);
     if (!enCours(r)) return r;
     if (Date.now() - debut > DUREE_MAX_FINALISER_MS) {
       throw new ErreurPublication(
@@ -336,15 +372,19 @@ export async function publierBienSurSite(bienId: string): Promise<ResultatPublic
 
     if (retrait) {
       // Retrait : trois clés suffisent (contrat du 26 septembre, §4).
-      r = await appeler("/biens", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          reference: bien.reference,
-          diffusion: bien.diffusionEtat,
-          statutCommercial: bien.statutCommercial,
-        }),
-      });
+      r = await appeler(
+        "/biens",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reference: bien.reference,
+            diffusion: bien.diffusionEtat,
+            statutCommercial: bien.statutCommercial,
+          }),
+        },
+        `A retrait ${bien.reference}`,
+      );
     } else {
       const photos = photosPubliables(bien.id);
       if (photos.length === 0) {
@@ -369,12 +409,24 @@ export async function publierBienSurSite(bienId: string): Promise<ResultatPublic
       signature = signaturePhotos(photos);
       const photosChangees = !dejaEnvoye || signature !== bien.sitePhotosSignature;
       const fiche = construireFiche(bien, photosChangees ? photos : null);
-
-      r = await appeler("/biens", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(fiche),
+      // Pourquoi les photos partent ou non : booleens et compte seulement.
+      journaliser({
+        appel: `décision ${bien.reference}`,
+        dejaEnvoye,
+        empreinteEnregistree: bien.sitePhotosSignature != null,
+        photosChangees,
+        photosDansLaFiche: photosChangees ? photos.length : 0,
       });
+
+      r = await appeler(
+        "/biens",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(fiche),
+        },
+        `A ${bien.reference}`,
+      );
       if (r.http !== 422 && photosChangees) {
         const refus = await envoyerPhotos(bien.reference, photos);
         r = refus ?? (await finaliser(bien.reference));
@@ -404,6 +456,7 @@ export async function publierBienSurSite(bienId: string): Promise<ResultatPublic
     return { ok: true, titre: `Site : ${resultat}.`, details, adresse: r.adresse ?? null };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
+    journaliser({ appel: `échec ${bien.reference}`, message });
     enregistrer(bien.id, "échec", `Échec de la publication : ${message}`);
     return { ok: false, titre: "La publication n'a pas abouti.", details: [message] };
   }
