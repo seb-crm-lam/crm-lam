@@ -249,7 +249,11 @@ async function appeler(chemin: string, init: RequestInit, etiquette: string): Pr
     resultat: corps?.resultat ?? null,
     message: corps?.message ?? null,
     erreurs: corps?.erreurs ?? null,
-    photosEnEchec: Array.isArray(corps?.photosEnEchec) ? corps.photosEnEchec.length : null,
+    // Nom de fichier et motif donnés par le site (jamais de chemin) : c'est
+    // le motif qui manquait pour comprendre un refus de photo.
+    photosEnEchec: Array.isArray(corps?.photosEnEchec)
+      ? corps.photosEnEchec.slice(0, 20).map((e: any) => ({ nom: e?.nom ?? null, raison: e?.raison ?? null }))
+      : null,
   });
   if (res.status === 401 || res.status === 403) {
     throw new ErreurPublication("Le site refuse les identifiants du CRM (compte crm-lam ou mot de passe d'application).");
@@ -437,7 +441,12 @@ export async function publierBienSurSite(bienId: string): Promise<ResultatPublic
 
     const resultat = r.resultat ?? `HTTP ${r.http}`;
     if (r.http === 422 || resultat === "refusé") {
-      const details = [r.message, ...(r.erreurs ?? [])].filter(Boolean) as string[];
+      // Les photos en échec étaient ignorées dans un refus : on affiche leur
+      // nom et le motif donné par le site, comme pour une publication réussie.
+      const photosRefusees = (r.photosEnEchec ?? []).map(
+        (e) => `Photo en échec : ${e.nom}${e.raison ? ` (${e.raison})` : ""}`,
+      );
+      const details = [r.message, ...(r.erreurs ?? []), ...photosRefusees].filter(Boolean) as string[];
       enregistrer(bien.id, "refusé", `Refusé par le site : ${details.join(" · ")}`, r);
       return { ok: false, titre: "Le site a refusé l'envoi.", details };
     }
