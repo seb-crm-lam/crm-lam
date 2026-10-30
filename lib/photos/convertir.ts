@@ -12,7 +12,8 @@
 // l'appelant, jamais en parallèle.
 
 import sharp from "sharp";
-import convert from "heic-convert";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const libheif = require("libheif-js/wasm-bundle");
 
 export const COTE_MAX_PX = 3000;
 export const QUALITE_JPEG = 85;
@@ -45,21 +46,35 @@ function nomJpeg(nom: string): string {
   return `${base}.jpg`;
 }
 
+async function decoderHeic(buffer: Buffer): Promise<{ pixels: Buffer; largeur: number; hauteur: number }> {
+  const images = new libheif.HeifDecoder().decode(buffer);
+  if (!images || images.length === 0) throw new Error("fichier HEIC illisible");
+  const image = images[0];
+  const largeur: number = image.get_width();
+  const hauteur: number = image.get_height();
+  const sortie = { data: new Uint8ClampedArray(largeur * hauteur * 4), width: largeur, height: hauteur };
+  await new Promise<void>((ok, ko) => image.display(sortie, (r: unknown) => (r ? ok() : ko(new Error("décodage HEIC impossible")))));
+  return { pixels: Buffer.from(sortie.data.buffer), largeur, hauteur };
+}
+
 export async function convertirPhoto(buffer: Buffer, nomFichier: string): Promise<PhotoConvertie> {
   try {
     let source: Buffer = buffer;
 
+    let entree: ReturnType<typeof sharp>;
     if (estHeic(buffer, nomFichier)) {
-      // sharp (libvips du serveur) ne lit pas ce HEIC : on décode d'abord en JPEG
-      // pleine qualité, puis sharp redimensionne.
-      const decode = await convert({ buffer, format: "JPEG", quality: 1 });
-      source = Buffer.from(decode);
+      // sharp (libvips du serveur) ne lit pas ce HEIC : libheif-js décode les
+      // pixels directement, sharp les reçoit bruts (pas d'encodage JPEG
+      // intermédiaire). libheif applique lui-même la rotation du fichier.
+      const { pixels, largeur, hauteur } = await decoderHeic(buffer);
+      entree = sharp(pixels, { raw: { width: largeur, height: hauteur, channels: 4 } });
+    } else {
+      // rotate() applique l'orientation EXIF puis la retire.
+      entree = sharp(buffer, { failOn: "error" }).rotate();
     }
 
-    // rotate() sans argument applique l'orientation EXIF puis la retire.
     // Par défaut sharp n'écrit ni EXIF ni GPS dans la sortie.
-    const { data, info } = await sharp(source, { failOn: "error" })
-      .rotate()
+    const { data, info } = await entree
       .resize({ width: COTE_MAX_PX, height: COTE_MAX_PX, fit: "inside", withoutEnlargement: true })
       .jpeg({ quality: QUALITE_JPEG, mozjpeg: true })
       .toBuffer({ resolveWithObject: true });
