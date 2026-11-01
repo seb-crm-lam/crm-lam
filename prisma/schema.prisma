@@ -149,6 +149,7 @@ model Bien {
   documents         Document[]
   demandes          Demande[]
   evenements        Evenement[]
+  publications      Publication[]
 }
 
 model BienPhoto {
@@ -325,4 +326,15 @@ model Evenement {
   detail        String?
   auteur        String?
   evenementLieId String? // 24/09/2026 : une annulation d'envoi pointe vers l'envoi corrigé (append-only)
+}
+
+// 1er novembre 2026 — suivi des publications réseaux (interne, jamais envoyé au site).
+model Publication {
+  id              String   @id @default(uuid())
+  bienId          String
+  bien            Bien     @relation(fields: [bienId], references: [id])
+  reseau          String // instagram|facebook|tiktok
+  format          String // photo|carrousel|video|story
+  datePublication String // AAAA-MM-JJ, modifiable librement
+  createdAt       DateTime @default(now())
 }

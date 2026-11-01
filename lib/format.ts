@@ -193,3 +193,59 @@ export const GROUPES_PRESTATION: { code: string; label: string }[] = [
 export const GROUPE_PRESTATION_LABELS: Record<string, string> = Object.fromEntries(
   GROUPES_PRESTATION.map((g) => [g.code, g.label])
 );
+
+
+// Suivi des publications réseaux (1er novembre 2026). Le nom du réseau est
+// toujours écrit : la couleur ne porte jamais seule l'information.
+export const RESEAU_LABELS: Record<string, string> = {
+  instagram: "Instagram",
+  facebook: "Facebook",
+  tiktok: "TikTok",
+};
+export const RESEAU_ABREGE: Record<string, string> = {
+  instagram: "IG",
+  facebook: "FB",
+  tiktok: "TT",
+};
+export const FORMAT_PUBLICATION_LABELS: Record<string, string> = {
+  photo: "Photo",
+  carrousel: "Carrousel",
+  video: "Vidéo",
+  story: "Story",
+};
+
+// Date du jour au Maroc, au format AAAA-MM-JJ (le serveur tourne en UTC).
+export function aujourdhuiMaroc(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Casablanca" }).format(new Date());
+}
+
+// Calcul de dates AAAA-MM-JJ sans fuseau (midi UTC, pour éviter tout décalage).
+export function ajouterJours(dateIso: string, jours: number): string {
+  const d = new Date(dateIso + "T12:00:00Z");
+  d.setUTCDate(d.getUTCDate() + jours);
+  return d.toISOString().slice(0, 10);
+}
+
+export function lundiDeLaSemaine(dateIso: string): string {
+  const d = new Date(dateIso + "T12:00:00Z");
+  const jour = (d.getUTCDay() + 6) % 7; // lundi = 0
+  return ajouterJours(dateIso, -jour);
+}
+
+export function ecartJours(depuisIso: string, jusquaIso: string): number {
+  const a = new Date(depuisIso + "T12:00:00Z").getTime();
+  const b = new Date(jusquaIso + "T12:00:00Z").getTime();
+  return Math.round((b - a) / 86400000);
+}
+
+export function formatJourCourt(dateIso: string): string {
+  return new Intl.DateTimeFormat("fr-FR", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(
+    new Date(dateIso + "T12:00:00Z")
+  );
+}
+
+export function depuisJours(n: number): string {
+  if (n <= 0) return "aujourd'hui";
+  if (n === 1) return "hier";
+  return `il y a ${n} jours`;
+}

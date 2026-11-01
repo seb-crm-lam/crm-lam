@@ -9,6 +9,7 @@ const ITEMS = [
   { href: "/biens", label: "Biens" },
   { href: "/contacts", label: "Contacts" },
   { href: "/rapprochement", label: "Rapprochement" },
+  { href: "/reseaux", label: "Réseaux" },
 ];
 
 export default function Nav() {
@@ -52,7 +53,7 @@ export default function Nav() {
         className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-card"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <ul className="grid grid-cols-5">
+        <ul className="grid grid-cols-6">
           {ITEMS.map((item) => (
             <li key={item.href}>
               <Link

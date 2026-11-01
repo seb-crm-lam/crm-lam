@@ -887,3 +887,41 @@ export async function creerVisite(bonVisiteLigneId: string, formData: FormData) 
   revalidatePath(`/contacts/${ligne.contactId}`);
   revalidatePath(`/bons-visite/${ligne.bonVisiteId}`);
 }
+
+// ---------------------------------------------------------------------------
+// Suivi des publications réseaux (1er novembre 2026)
+// ---------------------------------------------------------------------------
+
+const RESEAUX_VALIDES = ["instagram", "facebook", "tiktok"];
+const FORMATS_VALIDES = ["photo", "carrousel", "video", "story"];
+
+export async function ajouterPublication(bienId: string, formData: FormData) {
+  const reseau = String(formData.get("reseau") ?? "");
+  const format = String(formData.get("format") ?? "");
+  const date = String(formData.get("datePublication") ?? "");
+  if (!RESEAUX_VALIDES.includes(reseau)) throw new Error("Choisis un réseau.");
+  if (!FORMATS_VALIDES.includes(format)) throw new Error("Choisis un format.");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || isNaN(new Date(date + "T12:00:00Z").getTime())) {
+    throw new Error("Date invalide.");
+  }
+  if (!db.prepare(`SELECT 1 FROM Bien WHERE id = ?`).get(bienId)) throw new Error("Bien introuvable.");
+
+  db.prepare(
+    `INSERT INTO Publication (id, bienId, reseau, format, datePublication) VALUES (?, ?, ?, ?, ?)`
+  ).run(randomUUID(), bienId, reseau, format, date);
+
+  revalidatePath(`/biens/${bienId}`);
+  revalidatePath("/reseaux");
+  revalidatePath("/journee");
+}
+
+export async function supprimerPublication(publicationId: string) {
+  const ligne = db.prepare(`SELECT bienId FROM Publication WHERE id = ?`).get(publicationId) as
+    | { bienId: string }
+    | undefined;
+  if (!ligne) return;
+  db.prepare(`DELETE FROM Publication WHERE id = ?`).run(publicationId);
+  revalidatePath(`/biens/${ligne.bienId}`);
+  revalidatePath("/reseaux");
+  revalidatePath("/journee");
+}

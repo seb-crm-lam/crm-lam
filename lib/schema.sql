@@ -287,3 +287,18 @@ CREATE TABLE IF NOT EXISTS Utilisateur (
   totpSecret TEXT NOT NULL,
   dateCreation TEXT NOT NULL
 );
+
+-- 1er novembre 2026 — suivi des publications sur les réseaux (décision de
+-- Seb : Instagram, Facebook, TikTok ; Photo, Carrousel, Vidéo, Story). Une
+-- ligne par publication, donnée interne, jamais envoyée au site.
+-- datePublication : AAAA-MM-JJ, modifiable librement (date passée acceptée).
+CREATE TABLE IF NOT EXISTS Publication (
+  id TEXT PRIMARY KEY,
+  bienId TEXT NOT NULL REFERENCES Bien(id),
+  reseau TEXT NOT NULL,
+  format TEXT NOT NULL,
+  datePublication TEXT NOT NULL,
+  createdAt TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_publication_bien ON Publication(bienId, datePublication);
+CREATE INDEX IF NOT EXISTS idx_publication_date ON Publication(datePublication);

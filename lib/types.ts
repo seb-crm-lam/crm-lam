@@ -294,3 +294,17 @@ export interface Visite {
   suite: SuiteVisite | null;
   dateRelance: string | null;
 }
+
+
+// Suivi des publications réseaux (1er novembre 2026) — donnée interne.
+export type ReseauPublication = "instagram" | "facebook" | "tiktok";
+export type FormatPublication = "photo" | "carrousel" | "video" | "story";
+
+export interface Publication {
+  id: string;
+  bienId: string;
+  reseau: ReseauPublication;
+  format: FormatPublication;
+  datePublication: string; // AAAA-MM-JJ
+  createdAt: string;
+}

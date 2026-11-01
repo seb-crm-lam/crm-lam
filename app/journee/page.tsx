@@ -8,9 +8,11 @@ import {
   listBiens,
   listContactsAvecRechercheActive,
   getEnvoisWhatsappDuJour,
+  getBiensAPublier,
+  SEUIL_ALERTE_PUBLICATION_JOURS,
 } from "@/lib/repo";
 import { annulerEnvoiWhatsapp } from "@/lib/actions";
-import { heuresDepuisTexte, formatDate } from "@/lib/format";
+import { heuresDepuisTexte, formatDate, aujourdhuiMaroc, depuisJours, ecartJours } from "@/lib/format";
 
 
 // Données lues à chaque affichage (sinon la page serait figée au moment de la construction).
@@ -43,6 +45,8 @@ export default function JourneePage() {
   const biensRetires = getBiensRetiresARelancer();
   const clientsAboutis = getClientsAboutisARelancer();
   const envoisDuJour = getEnvoisWhatsappDuJour();
+  const aujourdhui = aujourdhuiMaroc();
+  const aPublier = getBiensAPublier(aujourdhui);
 
   const biens = listBiens();
   const contacts = listContactsAvecRechercheActive();
@@ -63,6 +67,19 @@ export default function JourneePage() {
       </div>
 
       <div className="space-y-6">
+        <Section title={`À publier (sans publication depuis ${SEUIL_ALERTE_PUBLICATION_JOURS} jours)`} count={aPublier.length}>
+          {aPublier.map(({ bien, dernierePublication }) => (
+            <li key={bien.id} className="text-sm flex items-center justify-between gap-2">
+              <Link href={`/biens/${bien.id}`} className="text-accent hover:underline">
+                {bien.reference} — {bien.titre}
+              </Link>
+              <span className="label-sm">
+                {dernierePublication ? depuisJours(ecartJours(dernierePublication, aujourdhui)) : "Jamais publié"}
+              </span>
+            </li>
+          ))}
+        </Section>
+
         <Section title="Demandes sans réponse" count={demandes.length}>
           {demandes.map((d) => (
             <li key={d.id} className="text-sm flex items-center justify-between">

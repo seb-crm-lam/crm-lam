@@ -11,6 +11,7 @@ import type {
   Evenement,
   PieceDossier,
   Prestation,
+  Publication,
   Quartier,
   Recherche,
   Visite,
@@ -697,4 +698,67 @@ export function getVisitesPourBien(
     contactId: r.contactId,
     contactNom: r.contactPrenom ? `${r.contactPrenom} ${r.contactNom}` : r.contactNom,
   }));
+}
+
+
+// ---------------------------------------------------------------------------
+// Suivi des publications réseaux (1er novembre 2026)
+// ---------------------------------------------------------------------------
+
+export const SEUIL_ALERTE_PUBLICATION_JOURS = 14;
+
+export function listPublicationsBien(bienId: string): Publication[] {
+  return db
+    .prepare(`SELECT * FROM Publication WHERE bienId = ? ORDER BY datePublication DESC, createdAt DESC`)
+    .all(bienId) as Publication[];
+}
+
+export interface PublicationAgenda extends Publication {
+  bienReference: string;
+  bienTitre: string;
+  bienDiffusionEtat: string;
+}
+
+export function listPublicationsPeriode(debut: string, fin: string): PublicationAgenda[] {
+  return db
+    .prepare(
+      `SELECT p.*, b.reference AS bienReference, b.titre AS bienTitre, b.diffusionEtat AS bienDiffusionEtat
+       FROM Publication p JOIN Bien b ON b.id = p.bienId
+       WHERE p.datePublication >= ? AND p.datePublication <= ?
+       ORDER BY p.datePublication ASC, p.createdAt ASC`
+    )
+    .all(debut, fin) as PublicationAgenda[];
+}
+
+export interface BienAPublier {
+  bien: Bien;
+  dernierePublication: string | null; // AAAA-MM-JJ, null = jamais publié
+}
+
+// Biens sans publication depuis plus de 14 jours (ou jamais publiés). Exclus :
+// off-market (décision de Seb du 1er novembre), archivés, brouillons, retirés,
+// vendus, loués.
+export function getBiensAPublier(aujourdhui: string): BienAPublier[] {
+  const seuil = SEUIL_ALERTE_PUBLICATION_JOURS;
+  const rows = db
+    .prepare(
+      `SELECT b.id AS id, MAX(p.datePublication) AS derniere
+       FROM Bien b LEFT JOIN Publication p ON p.bienId = b.id
+       WHERE b.diffusionEtat IN ('publie', 'publie_hors_catalogue')
+         AND b.statutCommercial IN ('disponible', 'sous_promesse')
+       GROUP BY b.id`
+    )
+    .all() as { id: string; derniere: string | null }[];
+  const jourMs = 86400000;
+  const maintenant = new Date(aujourdhui + "T12:00:00Z").getTime();
+  const resultat: BienAPublier[] = [];
+  for (const r of rows) {
+    const ecart = r.derniere ? Math.round((maintenant - new Date(r.derniere + "T12:00:00Z").getTime()) / jourMs) : Infinity;
+    if (ecart > seuil) {
+      const bien = getBien(r.id);
+      if (bien) resultat.push({ bien, dernierePublication: r.derniere });
+    }
+  }
+  // Jamais publiés d'abord, puis les plus anciens.
+  return resultat.sort((a, b) => (a.dernierePublication ?? "").localeCompare(b.dernierePublication ?? ""));
 }

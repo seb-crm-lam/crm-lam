@@ -15,6 +15,7 @@ import {
 import { marquerDocumentSigne, ajouterPhotosBien, supprimerPhotoBien, mettreAJourPieceDossier } from "@/lib/actions";
 import EnvoyerCompteRendu from "@/components/EnvoyerCompteRendu";
 import PublierSurSite from "@/components/site/PublierSurSite";
+import SectionPublicationsBien from "@/components/publications/SectionPublicationsBien";
 import { NIVEAU_LABELS, BLOC_LABELS, blocFondsActif } from "@/lib/pieces";
 import {
 
@@ -195,6 +196,8 @@ export default function FicheBienPage({
               </button>
             </form>
           </div>
+
+          <SectionPublicationsBien bienId={bien.id} offMarket={bien.diffusionEtat === "off_market"} />
 
           <div className="card p-5">
             <div className="label-sm mb-2">Mise en avant</div>
