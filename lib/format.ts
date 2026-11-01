@@ -212,6 +212,7 @@ export const FORMAT_PUBLICATION_LABELS: Record<string, string> = {
   carrousel: "Carrousel",
   video: "Vidéo",
   story: "Story",
+  sans_photo: "Sans photo",
 };
 
 // Date du jour au Maroc, au format AAAA-MM-JJ (le serveur tourne en UTC).

@@ -298,7 +298,7 @@ export interface Visite {
 
 // Suivi des publications réseaux (1er novembre 2026) — donnée interne.
 export type ReseauPublication = "instagram" | "facebook" | "tiktok";
-export type FormatPublication = "photo" | "carrousel" | "video" | "story";
+export type FormatPublication = "photo" | "carrousel" | "video" | "story" | "sans_photo";
 
 export interface Publication {
   id: string;

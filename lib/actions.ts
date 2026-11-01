@@ -893,7 +893,7 @@ export async function creerVisite(bonVisiteLigneId: string, formData: FormData) 
 // ---------------------------------------------------------------------------
 
 const RESEAUX_VALIDES = ["instagram", "facebook", "tiktok"];
-const FORMATS_VALIDES = ["photo", "carrousel", "video", "story"];
+const FORMATS_VALIDES = ["photo", "carrousel", "video", "story", "sans_photo"];
 
 export async function ajouterPublication(bienId: string, formData: FormData) {
   const reseau = String(formData.get("reseau") ?? "");

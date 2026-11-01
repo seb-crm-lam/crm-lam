@@ -334,7 +334,7 @@ model Publication {
   bienId          String
   bien            Bien     @relation(fields: [bienId], references: [id])
   reseau          String // instagram|facebook|tiktok
-  format          String // photo|carrousel|video|story
+  format          String // photo|carrousel|video|story|sans_photo
   datePublication String // AAAA-MM-JJ, modifiable librement
   createdAt       DateTime @default(now())
 }
