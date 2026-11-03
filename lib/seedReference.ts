@@ -101,6 +101,23 @@ const QUARTIERS_AJOUTES: QuartierSeed[] = [
   { id: '1d342d48-77da-4cd0-9ce5-f8a5855770c3', nom: 'Victor Hugo', quartierParentId: null, texteIntroductionPublie: 0, datePremierSignalement: null },
 ];
 
+// Prestations ajoutées après la liste de départ. Insérées au démarrage si elles
+// manquent (recherche par nom), y compris sur une base déjà en production.
+//  - 3 novembre 2026 : « Jacuzzi », groupe Intérieurs — demande de Seb.
+//    ⚠️ À créer aussi côté WordPress (même nom, même groupe) avant publication
+//    d'un bien qui le porte : une valeur inconnue du site fait refuser l'envoi.
+const PRESTATIONS_AJOUTEES: PrestationSeed[] = [
+  { id: 'c1f6a3b2-7d4e-4a58-9b0e-2e6f8d1a5c93', nom: 'Jacuzzi', groupe: 'interieurs' },
+];
+
+function ajouterPrestationsManquantes(db: Database.Database) {
+  const existe = db.prepare("SELECT 1 FROM Prestation WHERE nom = ?");
+  const inserer = db.prepare("INSERT INTO Prestation (id, nom, groupe) VALUES (@id, @nom, @groupe)");
+  for (const p of PRESTATIONS_AJOUTEES) {
+    if (!existe.get(p.nom)) inserer.run(p);
+  }
+}
+
 function ajouterQuartiersManquants(db: Database.Database) {
   const existe = db.prepare("SELECT 1 FROM Quartier WHERE nom = ?");
   const inserer = db.prepare(
@@ -135,4 +152,6 @@ export function seedReferenceData(db: Database.Database) {
     });
     tout();
   }
+
+  ajouterPrestationsManquantes(db);
 }
