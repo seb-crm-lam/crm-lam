@@ -927,13 +927,13 @@ export async function supprimerPublication(publicationId: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Quartiers — « Texte en ligne » (décisions de Seb du 8 novembre 2026).
-// Seb coche, une fois le texte d'introduction publié sur le site : la ligne
+// Quartiers — « Texte publié » (décisions de Seb du 8 novembre 2026).
+// Seb clique, une fois le texte d'introduction publié sur le site : la ligne
 // quitte « Ma journée > Quartiers sans texte ». Le CRM ne peut pas le
 // constater seul.
 // ---------------------------------------------------------------------------
 
-export async function marquerTexteQuartierEnLigne(quartierId: string) {
+export async function marquerTexteQuartierPublie(quartierId: string) {
   const resultat = db
     .prepare(`UPDATE Quartier SET texteIntroductionPublie = 1 WHERE id = ?`)
     .run(quartierId);
