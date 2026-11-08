@@ -167,6 +167,11 @@ export default function RapprochementPage({
                       {recherche.etatBienRecherche ? ETAT_RECHERCHE_LABELS[recherche.etatBienRecherche] : "—"}
                     </div>
                   </div>
+                  {recherche.messageProspect && (
+                    <div className="mt-3 text-sm italic border-l-2 border-border pl-3 text-muted">
+                      « {recherche.messageProspect} »
+                    </div>
+                  )}
                 </div>
 
                 <div className="card overflow-visible">
