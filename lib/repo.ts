@@ -588,7 +588,7 @@ export function getDemandesSansReponse(): Demande[] {
 // Quartiers à signaler dans « Ma journée » (décisions de Seb du 8 novembre 2026) :
 // texte d'introduction non publié ET au moins un bien publié dans le quartier.
 // Les brouillons, off-market et archivés ne comptent pas. La ligne reste
-// affichée tant que Seb n'a pas coché « Texte en ligne ». Tout est calculé à
+// affichée tant que Seb n'a pas cliqué sur « Texte publié ». Tout est calculé à
 // l'affichage : rien n'est écrit ici (la date vient de la première publication).
 export const ETATS_DIFFUSION_QUARTIER = ["publie"];
 

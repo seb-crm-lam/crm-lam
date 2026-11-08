@@ -11,8 +11,7 @@ import {
   getBiensAPublier,
   SEUIL_ALERTE_PUBLICATION_JOURS,
 } from "@/lib/repo";
-import { annulerEnvoiWhatsapp, marquerTexteQuartierEnLigne } from "@/lib/actions";
-import CopierDemandeTexteQuartier from "@/components/CopierDemandeTexteQuartier";
+import { annulerEnvoiWhatsapp, marquerTexteQuartierPublie } from "@/lib/actions";
 import { heuresDepuisTexte, formatDate, aujourdhuiMaroc, depuisJours, ecartJours } from "@/lib/format";
 
 
@@ -161,10 +160,10 @@ export default function JourneePage() {
                 {q.depuis && <span className="label-sm block">Signalé depuis le {formatDate(q.depuis)}</span>}
               </span>
               <span className="flex flex-wrap items-center gap-2">
-                <CopierDemandeTexteQuartier nom={q.nom} nbBiens={q.nbBiensPublies} />
-                <form action={marquerTexteQuartierEnLigne.bind(null, q.id)}>
+                <span className="pill pill-neutral">Texte manquant</span>
+                <form action={marquerTexteQuartierPublie.bind(null, q.id)}>
                   <button type="submit" className="btn-secondary text-xs">
-                    ✓ Texte en ligne
+                    Texte publié
                   </button>
                 </form>
               </span>
