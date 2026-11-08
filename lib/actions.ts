@@ -925,3 +925,18 @@ export async function supprimerPublication(publicationId: string) {
   revalidatePath("/reseaux");
   revalidatePath("/journee");
 }
+
+// ---------------------------------------------------------------------------
+// Quartiers — « Texte en ligne » (décisions de Seb du 8 novembre 2026).
+// Seb coche, une fois le texte d'introduction publié sur le site : la ligne
+// quitte « Ma journée > Quartiers sans texte ». Le CRM ne peut pas le
+// constater seul.
+// ---------------------------------------------------------------------------
+
+export async function marquerTexteQuartierEnLigne(quartierId: string) {
+  const resultat = db
+    .prepare(`UPDATE Quartier SET texteIntroductionPublie = 1 WHERE id = ?`)
+    .run(quartierId);
+  if (resultat.changes === 0) throw new Error("Quartier introuvable.");
+  revalidatePath("/journee");
+}

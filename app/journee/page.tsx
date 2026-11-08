@@ -11,7 +11,8 @@ import {
   getBiensAPublier,
   SEUIL_ALERTE_PUBLICATION_JOURS,
 } from "@/lib/repo";
-import { annulerEnvoiWhatsapp } from "@/lib/actions";
+import { annulerEnvoiWhatsapp, marquerTexteQuartierEnLigne } from "@/lib/actions";
+import CopierDemandeTexteQuartier from "@/components/CopierDemandeTexteQuartier";
 import { heuresDepuisTexte, formatDate, aujourdhuiMaroc, depuisJours, ecartJours } from "@/lib/format";
 
 
@@ -152,9 +153,21 @@ export default function JourneePage() {
 
         <Section title="Quartiers sans texte" count={quartiers.length}>
           {quartiers.map((q) => (
-            <li key={q.id} className="text-sm flex items-center justify-between">
-              <span>{q.nom}</span>
-              <span className="label-sm">{formatDate(q.datePremierSignalement)}</span>
+            <li key={q.id} className="text-sm flex flex-wrap items-center justify-between gap-2">
+              <span className="min-w-0">
+                <span className="font-medium">{q.nom}</span>
+                {" · "}
+                {q.nbBiensPublies} bien{q.nbBiensPublies > 1 ? "s" : ""} publié{q.nbBiensPublies > 1 ? "s" : ""}
+                {q.depuis && <span className="label-sm block">Signalé depuis le {formatDate(q.depuis)}</span>}
+              </span>
+              <span className="flex flex-wrap items-center gap-2">
+                <CopierDemandeTexteQuartier nom={q.nom} nbBiens={q.nbBiensPublies} />
+                <form action={marquerTexteQuartierEnLigne.bind(null, q.id)}>
+                  <button type="submit" className="btn-secondary text-xs">
+                    ✓ Texte en ligne
+                  </button>
+                </form>
+              </span>
             </li>
           ))}
         </Section>
