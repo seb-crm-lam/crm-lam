@@ -138,6 +138,14 @@ export interface Quartier {
   datePremierSignalement: string | null;
 }
 
+// Quartier à signaler dans « Ma journée » : texte d'introduction manquant et
+// au moins un bien publié (décisions de Seb du 8 novembre 2026).
+export interface QuartierSansTexte extends Quartier {
+  nbBiensPublies: number;
+  // Date du premier signalement (première publication d'un bien du quartier).
+  depuis: string | null;
+}
+
 export interface Prestation {
   id: string;
   nom: string;

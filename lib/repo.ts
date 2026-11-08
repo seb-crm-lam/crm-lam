@@ -13,6 +13,7 @@ import type {
   Prestation,
   Publication,
   Quartier,
+  QuartierSansTexte,
   Recherche,
   Visite,
 } from "./types";
@@ -584,9 +585,27 @@ export function getDemandesSansReponse(): Demande[] {
     .map(mapDemande);
 }
 
-export function getQuartiersSansTexte(): Quartier[] {
+// Quartiers à signaler dans « Ma journée » (décisions de Seb du 8 novembre 2026) :
+// texte d'introduction non publié ET au moins un bien publié dans le quartier.
+// Les brouillons, off-market et archivés ne comptent pas. La ligne reste
+// affichée tant que Seb n'a pas coché « Texte en ligne ». Tout est calculé à
+// l'affichage : rien n'est écrit ici (la date vient de la première publication).
+export const ETATS_DIFFUSION_QUARTIER = ["publie"];
+
+export function getQuartiersSansTexte(): QuartierSansTexte[] {
+  const etats = ETATS_DIFFUSION_QUARTIER.map((e) => `'${e}'`).join(", ");
   return db
-    .prepare(`SELECT * FROM Quartier WHERE texteIntroductionPublie = 0 AND datePremierSignalement IS NOT NULL`)
+    .prepare(
+      `SELECT q.*,
+              COUNT(b.id) AS nbBiensPublies,
+              COALESCE(MIN(b.siteDernierePublication), q.datePremierSignalement) AS depuis
+       FROM Quartier q
+       JOIN Bien b ON b.quartierId = q.id
+       WHERE q.texteIntroductionPublie = 0
+         AND b.diffusionEtat IN (${etats})
+       GROUP BY q.id
+       ORDER BY depuis ASC, q.nom ASC`
+    )
     .all()
     .map((r: any) => ({ ...r, texteIntroductionPublie: toBool(r.texteIntroductionPublie) }));
 }
