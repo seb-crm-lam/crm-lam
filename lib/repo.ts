@@ -590,7 +590,7 @@ export function getDemandesSansReponse(): Demande[] {
 // Les brouillons, off-market et archivés ne comptent pas. La ligne reste
 // affichée tant que Seb n'a pas coché « Texte en ligne ». Tout est calculé à
 // l'affichage : rien n'est écrit ici (la date vient de la première publication).
-export const ETATS_DIFFUSION_QUARTIER = ["publie", "publie_hors_catalogue"];
+export const ETATS_DIFFUSION_QUARTIER = ["publie"];
 
 export function getQuartiersSansTexte(): QuartierSansTexte[] {
   const etats = ETATS_DIFFUSION_QUARTIER.map((e) => `'${e}'`).join(", ");
