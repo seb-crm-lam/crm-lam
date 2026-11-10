@@ -96,9 +96,13 @@ const PRESTATIONS: PrestationSeed[] = [
 //    autres routes (Amizmiz, Casablanca, Fès, Ourika) — demande de Seb.
 //  - 26 octobre 2026 : « Victor Hugo », niveau principal comme Guéliz et
 //    Hivernage (option D choisie par Seb) — sans texte d'introduction.
+//  - 10 novembre 2026 : « Bab el Khemis », sous-quartier de la Médina —
+//    demande de Seb. Orthographe calquée sur « Dar el Bacha » (el en
+//    minuscule) ; à confirmer par Seb, puis à créer à l'identique côté site.
 const QUARTIERS_AJOUTES: QuartierSeed[] = [
   { id: '0202ab30-6ca1-48a9-a8be-bd330d766f5b', nom: 'Route de Ouarzazate', quartierParentId: null, texteIntroductionPublie: 0, datePremierSignalement: null },
   { id: '1d342d48-77da-4cd0-9ce5-f8a5855770c3', nom: 'Victor Hugo', quartierParentId: null, texteIntroductionPublie: 0, datePremierSignalement: null },
+  { id: 'c00b6845-9392-4882-b86b-a0200cac1f76', nom: 'Bab el Khemis', quartierParentId: '483fdcdc-35a8-40ab-be3b-8a830cf97021', texteIntroductionPublie: 0, datePremierSignalement: null },
 ];
 
 // Prestations ajoutées après la liste de départ. Insérées au démarrage si elles
