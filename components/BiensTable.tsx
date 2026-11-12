@@ -10,12 +10,31 @@ function diffusionPill(etat: string) {
   return <span className={`pill ${cls}`}>{DIFFUSION_LABELS[etat] ?? etat}</span>;
 }
 
+// Mode d'entrée du bien : « via » s'il y a un apporteur lié, « direct » s'il n'y a que le propriétaire.
+function modeEntree(b: Bien): "direct" | "via" | null {
+  if (b.apporteurId) return "via";
+  if (b.proprietaireId) return "direct";
+  return null;
+}
+
+function origineTexte(b: Bien): string {
+  const mode = modeEntree(b);
+  if (mode === "via") {
+    return b.proprietaireNom
+      ? `Via ${b.apporteurNom} · Prop. : ${b.proprietaireNom}`
+      : `Via ${b.apporteurNom}`;
+  }
+  if (mode === "direct") return `Direct · ${b.proprietaireNom}`;
+  return "—";
+}
+
 export default function BiensTable({ biens }: { biens: Bien[] }) {
   const [recherche, setRecherche] = useState("");
   const [typeBien, setTypeBien] = useState("");
   const [statutCommercial, setStatutCommercial] = useState("");
   const [diffusionEtat, setDiffusionEtat] = useState("");
   const [quartier, setQuartier] = useState("");
+  const [mode, setMode] = useState("");
 
   const typesPresents = useMemo(() => Array.from(new Set(biens.map((b) => b.typeBien))), [biens]);
   const statutsPresents = useMemo(() => Array.from(new Set(biens.map((b) => b.statutCommercial))), [biens]);
@@ -37,9 +56,10 @@ export default function BiensTable({ biens }: { biens: Bien[] }) {
       if (statutCommercial && b.statutCommercial !== statutCommercial) return false;
       if (diffusionEtat && b.diffusionEtat !== diffusionEtat) return false;
       if (quartier && b.quartierNom !== quartier) return false;
+      if (mode && modeEntree(b) !== mode) return false;
       return true;
     });
-  }, [biens, recherche, typeBien, statutCommercial, diffusionEtat, quartier]);
+  }, [biens, recherche, typeBien, statutCommercial, diffusionEtat, quartier, mode]);
 
   return (
     <div className="space-y-4">
@@ -83,6 +103,11 @@ export default function BiensTable({ biens }: { biens: Bien[] }) {
             </option>
           ))}
         </select>
+        <select value={mode} onChange={(e) => setMode(e.target.value)} className="input md:w-auto">
+          <option value="">Tous modes</option>
+          <option value="direct">Direct</option>
+          <option value="via">Via intermédiaire</option>
+        </select>
       </div>
 
       <div className="label-sm">
@@ -102,6 +127,7 @@ export default function BiensTable({ biens }: { biens: Bien[] }) {
                   <div className="min-w-0">
                     <div className="text-sm font-medium text-accent">{b.reference}</div>
                     <div className="text-sm">{b.titre}</div>
+                    <div className="text-xs text-muted">{origineTexte(b)}</div>
                   </div>
                   {diffusionPill(b.diffusionEtat)}
                 </div>
@@ -148,7 +174,10 @@ export default function BiensTable({ biens }: { biens: Bien[] }) {
                       {b.reference}
                     </Link>
                   </td>
-                  <td className="px-4 py-3">{b.titre}</td>
+                  <td className="px-4 py-3">
+                    {b.titre}
+                    <div className="text-xs text-muted">{origineTexte(b)}</div>
+                  </td>
                   <td className="px-4 py-3">{TYPE_BIEN_LABELS[b.typeBien] ?? b.typeBien}</td>
                   <td className="px-4 py-3">{b.quartierNom ?? "—"}</td>
                   <td className="px-4 py-3">

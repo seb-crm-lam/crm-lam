@@ -117,6 +117,8 @@ export interface Bien {
 
   // jointures pratiques (pas des colonnes)
   quartierNom?: string | null;
+  proprietaireNom?: string | null;
+  apporteurNom?: string | null;
 }
 
 export interface BienPhoto {

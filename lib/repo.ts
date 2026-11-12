@@ -96,8 +96,13 @@ function mapDemande(row: any): Demande {
 // ---------------------------------------------------------------------------
 
 const BIEN_SELECT = `
-  SELECT b.*, b.transaction_ AS transaction_, q.nom AS quartierNom
-  FROM Bien b LEFT JOIN Quartier q ON q.id = b.quartierId
+  SELECT b.*, b.transaction_ AS transaction_, q.nom AS quartierNom,
+    TRIM(COALESCE(cp.prenom || ' ', '') || cp.nom) AS proprietaireNom,
+    TRIM(COALESCE(ca.prenom || ' ', '') || ca.nom) AS apporteurNom
+  FROM Bien b
+  LEFT JOIN Quartier q ON q.id = b.quartierId
+  LEFT JOIN Contact cp ON cp.id = b.proprietaireId
+  LEFT JOIN Contact ca ON ca.id = b.apporteurId
 `;
 
 export function listBiens(): Bien[] {
