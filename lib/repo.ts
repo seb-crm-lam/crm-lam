@@ -1,5 +1,4 @@
 import { db } from "./db";
-import { PIECES_DOSSIER, blocFondsActif, blocSocieteActif, type BlocPieces } from "./pieces";
 import type {
   Bien,
   BienPhoto,
@@ -9,7 +8,6 @@ import type {
   Demande,
   Document,
   Evenement,
-  PieceDossier,
   Prestation,
   Publication,
   Quartier,
@@ -197,41 +195,6 @@ export function calculerFeuVert(bien: Bien): FeuVert {
     obtenus: criteres.filter((c) => c.ok).length,
     manquants: criteres.filter((c) => !c.ok).map((c) => c.label),
   };
-}
-
-// ---------------------------------------------------------------------------
-// Dossier de pièces vendeur (A25) — une ligne par pièce du catalogue fixe
-// (lib/pieces.ts), fusionnée avec l'état enregistré en base s'il existe.
-// Une pièce jamais touchée n'a donc pas de ligne en base : elle apparaît
-// simplement comme « non reçue ».
-// ---------------------------------------------------------------------------
-
-export function getPiecesDossier(bien: Bien): (PieceDossier & { nom: string; niveau: 1 | 2 | 3; bloc: BlocPieces })[] {
-  const bienId = bien.id;
-  const rows = db
-    .prepare(`SELECT * FROM PieceDossier WHERE bienId = ?`)
-    .all(bienId) as any[];
-  const parCle = new Map(rows.map((r) => [r.pieceKey, r]));
-  const societe = blocSocieteActif(bien);
-  const fonds = blocFondsActif(bien);
-
-  return PIECES_DOSSIER.filter(
-    (p) => !p.bloc || p.bloc === "base" || (p.bloc === "societe" && societe) || (p.bloc === "fonds" && fonds)
-  ).map((piece) => {
-    const row = parCle.get(piece.key);
-    return {
-      id: row?.id ?? "",
-      bienId,
-      pieceKey: piece.key,
-      nom: piece.nom,
-      niveau: piece.niveau,
-      bloc: piece.bloc ?? "base",
-      recueLe: row?.recueLe ?? null,
-      conforme: row ? toBoolN(row.conforme) : null,
-      relanceDemandee: row ? toBool(row.relanceDemandee) : false,
-      updatedAt: row?.updatedAt ?? "",
-    };
-  });
 }
 
 // ---------------------------------------------------------------------------

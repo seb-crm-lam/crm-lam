@@ -119,6 +119,9 @@ function migrer(db: Database.Database) {
   if (!bien.has("qualiteMandant")) executerMigration(db, `ALTER TABLE Bien ADD COLUMN qualiteMandant TEXT`);
   // 19 octobre 2026 — surface du terrain (villa, terrain) : garde-fou si une
   // base ancienne ne porte pas la colonne.
+  // 14 novembre 2026 — champ de note libre sur les documents du vendeur
+  // (remplace le suivi pièce par pièce, supprimé de la fiche).
+  if (!bien.has("notesDocuments")) executerMigration(db, `ALTER TABLE Bien ADD COLUMN notesDocuments TEXT`);
   if (!bien.has("surfaceTerrain")) executerMigration(db, `ALTER TABLE Bien ADD COLUMN surfaceTerrain REAL`);
 
   // 26 septembre 2026 — coordonnées en deux paires (décision 7 du

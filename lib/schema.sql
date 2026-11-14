@@ -121,6 +121,7 @@ CREATE TABLE IF NOT EXISTS Bien (
 
   conseillerReferent TEXT,
   notesInternes TEXT,
+  notesDocuments TEXT,
 
   proprietaireId TEXT REFERENCES Contact(id),
   apporteurId TEXT REFERENCES Contact(id),

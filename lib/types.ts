@@ -81,6 +81,7 @@ export interface Bien {
 
   conseillerReferent: string | null;
   notesInternes: string | null;
+  notesDocuments: string | null;
 
   proprietaireId: string | null;
   apporteurId: string | null;

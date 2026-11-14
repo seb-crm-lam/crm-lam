@@ -9,14 +9,13 @@ import {
   getContact,
   getBienDocuments,
   getVisitesPourBien,
-  getPiecesDossier,
   listContacts,
 } from "@/lib/repo";
-import { marquerDocumentSigne, ajouterPhotosBien, supprimerPhotoBien, mettreAJourPieceDossier } from "@/lib/actions";
+import { marquerDocumentSigne, ajouterPhotosBien, supprimerPhotoBien } from "@/lib/actions";
 import EnvoyerCompteRendu from "@/components/EnvoyerCompteRendu";
 import PublierSurSite from "@/components/site/PublierSurSite";
 import SectionPublicationsBien from "@/components/publications/SectionPublicationsBien";
-import { NIVEAU_LABELS, BLOC_LABELS, blocFondsActif } from "@/lib/pieces";
+import { blocFondsActif } from "@/lib/pieces";
 import {
 
   formatDh,
@@ -58,12 +57,6 @@ export default function FicheBienPage({
   const apporteur = bien.apporteurId ? getContact(bien.apporteurId) : undefined;
   const documents = getBienDocuments(bien.id);
   const visites = getVisitesPourBien(bien.id);
-  const pieces = getPiecesDossier(bien);
-  const piecesBase = pieces.filter((p) => p.bloc === "base");
-  const piecesParNiveau = { 1: piecesBase.filter((p) => p.niveau === 1), 2: piecesBase.filter((p) => p.niveau === 2), 3: piecesBase.filter((p) => p.niveau === 3) };
-  const blocsComplementaires = (["societe", "fonds"] as const)
-    .map((bloc) => ({ bloc, pieces: pieces.filter((p) => p.bloc === bloc) }))
-    .filter((b) => b.pieces.length > 0);
   const fondsActif = blocFondsActif(bien);
   const contactsCandidats = fondsActif ? listContacts().filter((c) => !c.anonymise) : [];
   const nomsContacts = new Map(listContacts().map((c) => [c.id, `${c.prenom ?? ""} ${c.nom}`.trim()]));
@@ -260,6 +253,11 @@ export default function FicheBienPage({
           </div>
 
           <div className="card p-5">
+            <div className="label-sm mb-2">Notes documents</div>
+            <p className="text-sm whitespace-pre-wrap">{bien.notesDocuments || "Aucune note."}</p>
+          </div>
+
+          <div className="card p-5">
             <div className="label-sm mb-3">Documents générés</div>
             {documents.length === 0 ? (
               <p className="text-sm text-muted">Aucun document généré pour l'instant.</p>
@@ -336,76 +334,6 @@ export default function FicheBienPage({
               </form>
             </div>
           )}
-
-          <div className="card p-5 space-y-4">
-            <div className="label-sm">Dossier de pièces vendeur</div>
-            {([1, 2, 3] as const).map((niveau) => (
-              <div key={niveau}>
-                <div className="text-xs text-muted mb-2">{NIVEAU_LABELS[niveau]}</div>
-                <div className="space-y-2">
-                  {piecesParNiveau[niveau].map((p) => (
-                    <form
-                      key={p.pieceKey}
-                      action={mettreAJourPieceDossier.bind(null, bien.id, p.pieceKey)}
-                      className="flex flex-wrap items-center gap-2 text-sm border-b border-border pb-2 last:border-0"
-                    >
-                      <span className="w-full md:w-auto md:flex-1 md:min-w-[180px]">{p.nom}</span>
-                      <input type="date" name="recueLe" defaultValue={p.recueLe ?? ""} className="input !w-auto flex-1 md:flex-none md:text-xs" />
-                      <select name="conforme" defaultValue={p.conforme === null ? "" : p.conforme ? "oui" : "non"} className="input !w-auto flex-1 md:flex-none md:text-xs">
-                        <option value="">Conforme ?</option>
-                        <option value="oui">Conforme</option>
-                        <option value="non">Non conforme</option>
-                      </select>
-                      <label className="flex items-center gap-1 text-xs">
-                        <input type="checkbox" name="relanceDemandee" defaultChecked={p.relanceDemandee} />
-                        Relance
-                      </label>
-                      <button type="submit" className="btn-secondary text-xs">
-                        Enregistrer
-                      </button>
-                    </form>
-                  ))}
-                </div>
-              </div>
-            ))}
-            {blocsComplementaires.map(({ bloc, pieces: piecesBloc }) => (
-              <div key={bloc}>
-                <div className="text-xs text-muted mb-2">{BLOC_LABELS[bloc]}</div>
-                <div className="space-y-2">
-                  {piecesBloc.map((p) => (
-                    <form
-                      key={p.pieceKey}
-                      action={mettreAJourPieceDossier.bind(null, bien.id, p.pieceKey)}
-                      className="flex flex-wrap items-center gap-2 text-sm border-b border-border pb-2 last:border-0"
-                    >
-                      <span className="w-full md:w-auto md:flex-1 md:min-w-[180px]">
-                        <span className="pill pill-neutral mr-2">Niv. {p.niveau}</span>
-                        {p.nom}
-                      </span>
-                      <input type="date" name="recueLe" defaultValue={p.recueLe ?? ""} className="input !w-auto flex-1 md:flex-none md:text-xs" />
-                      <select name="conforme" defaultValue={p.conforme === null ? "" : p.conforme ? "oui" : "non"} className="input !w-auto flex-1 md:flex-none md:text-xs">
-                        <option value="">Conforme ?</option>
-                        <option value="oui">Conforme</option>
-                        <option value="non">Non conforme</option>
-                      </select>
-                      <label className="flex items-center gap-1 text-xs">
-                        <input type="checkbox" name="relanceDemandee" defaultChecked={p.relanceDemandee} />
-                        Relance
-                      </label>
-                      <button type="submit" className="btn-secondary text-xs">
-                        Enregistrer
-                      </button>
-                    </form>
-                  ))}
-                </div>
-              </div>
-            ))}
-            <p className="text-xs text-muted">
-              Pièces « société » : affichées quand la qualité du mandant est « Représentant d'une société »
-              {bien.qualiteMandant ? ` (actuellement : ${QUALITE_MANDANT_LABELS[bien.qualiteMandant] ?? bien.qualiteMandant})` : " (non renseignée)"}.
-              Pièces « fonds de commerce » : case sur la fiche, bouton Modifier.
-            </p>
-          </div>
 
           <div className="card p-5 space-y-3">
             <div className="flex items-center justify-between">

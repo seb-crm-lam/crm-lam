@@ -9,7 +9,7 @@ import { tirerDecalage, distanceMetres, RAYON_MIN_M } from "./geo";
 import fs from "node:fs";
 import { enregistrerPhotoPapier, enregistrerFichier, cheminAbsoluDocument } from "./documents/storage";
 import { convertirPhoto } from "./photos/convertir";
-import { PIECES_DOSSIER, blocFondsParDefaut } from "./pieces";
+import { blocFondsParDefaut } from "./pieces";
 
 // ---------------------------------------------------------------------------
 // Biens — champs essentiels (ceux affichés sur la fiche bien). Le schéma
@@ -126,6 +126,7 @@ function extraireChampsBien(formData: FormData, creation = false) {
     mentionEditoriale: champTexte(formData, "mentionEditoriale"),
     conseillerReferent: champTexte(formData, "conseillerReferent"),
     notesInternes: champTexte(formData, "notesInternes"),
+    notesDocuments: champTexte(formData, "notesDocuments"),
     diffusionEtat: champTexte(formData, "diffusionEtat") ?? "brouillon",
     statutCommercial: champTexte(formData, "statutCommercial") ?? "disponible",
     estimationAgence: champNombre(formData, "estimationAgence"),
@@ -233,7 +234,7 @@ export async function createBien(formData: FormData) {
       id, reference, titre, description, typeBien, transaction_, quartierId, situation,
       statutJuridique, etatBien, surfaceSol, surfaceHabitable, surfaceTerrain, chambres, sallesBain,
       prixVente, prixSurDemande, prixPlancher, honorairesPourcentage,
-      mentionEditoriale, conseillerReferent, typeOrigine, notesInternes, exclusivite,
+      mentionEditoriale, conseillerReferent, typeOrigine, notesInternes, notesDocuments, exclusivite,
       diffusionEtat, statutCommercial, estimationAgence, contactAcces, clesConfiees,
       commissionTauxOuMontant, proprietaireId, apporteurId, natureVente, piecesFonds, qualiteMandant,
       adresseExacte, latitudeExacte, longitudeExacte, latitudePubliee, longitudePubliee,
@@ -244,7 +245,7 @@ export async function createBien(formData: FormData) {
       @id, @reference, @titre, @description, @typeBien, @transaction_, @quartierId, @situation,
       @statutJuridique, @etatBien, @surfaceSol, @surfaceHabitable, @surfaceTerrain, @chambres, @sallesBain,
       @prixVente, @prixSurDemande, @prixPlancher, @honorairesPourcentage,
-      @mentionEditoriale, @conseillerReferent, @typeOrigine, @notesInternes, @exclusivite,
+      @mentionEditoriale, @conseillerReferent, @typeOrigine, @notesInternes, @notesDocuments, @exclusivite,
       @diffusionEtat, @statutCommercial, @estimationAgence, @contactAcces, @clesConfiees,
       @commissionTauxOuMontant, @proprietaireId, @apporteurId, @natureVente, @piecesFonds, @qualiteMandant,
       @adresseExacte, @latitudeExacte, @longitudeExacte, @latitudePubliee, @longitudePubliee,
@@ -280,7 +281,7 @@ export async function updateBien(bienId: string, formData: FormData) {
       prixVente = @prixVente, prixSurDemande = @prixSurDemande,
       prixPlancher = @prixPlancher, honorairesPourcentage = @honorairesPourcentage,
       mentionEditoriale = @mentionEditoriale, conseillerReferent = @conseillerReferent,
-      typeOrigine = @typeOrigine, notesInternes = @notesInternes, exclusivite = @exclusivite,
+      typeOrigine = @typeOrigine, notesInternes = @notesInternes, notesDocuments = @notesDocuments, exclusivite = @exclusivite,
       diffusionEtat = @diffusionEtat, statutCommercial = @statutCommercial,
       estimationAgence = @estimationAgence, contactAcces = @contactAcces,
       clesConfiees = @clesConfiees, commissionTauxOuMontant = @commissionTauxOuMontant,
@@ -549,41 +550,6 @@ export async function marquerDocumentSigne(documentId: string, formData: FormDat
     });
     revalidatePath(`/biens/${doc.bienId}`);
   }
-}
-
-// ---------------------------------------------------------------------------
-// Dossier de pièces vendeur (A25) — une pièce à la fois, upsert par
-// (bienId, pieceKey). La liste des pièces valides vient du catalogue fixe
-// (lib/pieces.ts), jamais saisie librement.
-// ---------------------------------------------------------------------------
-
-export async function mettreAJourPieceDossier(bienId: string, pieceKey: string, formData: FormData) {
-  if (!PIECES_DOSSIER.some((p) => p.key === pieceKey)) {
-    throw new Error("Pièce inconnue du catalogue.");
-  }
-  const recueLe = champTexte(formData, "recueLe");
-  const conformeRaw = formData.get("conforme");
-  const conforme = conformeRaw === "oui" ? 1 : conformeRaw === "non" ? 0 : null;
-  const relanceDemandee = formData.get("relanceDemandee") ? 1 : 0;
-
-  const existant = db
-    .prepare(`SELECT id FROM PieceDossier WHERE bienId = ? AND pieceKey = ?`)
-    .get(bienId, pieceKey) as { id: string } | undefined;
-
-  if (existant) {
-    db.prepare(
-      `UPDATE PieceDossier SET recueLe = @recueLe, conforme = @conforme,
-        relanceDemandee = @relanceDemandee, updatedAt = datetime('now')
-       WHERE id = @id`
-    ).run({ id: existant.id, recueLe, conforme, relanceDemandee });
-  } else {
-    db.prepare(
-      `INSERT INTO PieceDossier (id, bienId, pieceKey, recueLe, conforme, relanceDemandee)
-       VALUES (@id, @bienId, @pieceKey, @recueLe, @conforme, @relanceDemandee)`
-    ).run({ id: randomUUID(), bienId, pieceKey, recueLe, conforme, relanceDemandee });
-  }
-
-  revalidatePath(`/biens/${bienId}`);
 }
 
 // ---------------------------------------------------------------------------

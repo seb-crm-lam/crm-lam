@@ -447,6 +447,9 @@ export default function BienFormClient({ bien, quartiers, contacts, prestations,
         <Champ label="Commentaire (notes libres)">
           <textarea name="notesInternes" defaultValue={bien?.notesInternes ?? ""} rows={3} className="input" />
         </Champ>
+        <Champ label="Notes documents (pièces du vendeur, état du dossier)">
+          <textarea name="notesDocuments" defaultValue={bien?.notesDocuments ?? ""} rows={4} className="input" />
+        </Champ>
       </div>
 
       <div className="card p-5 space-y-4">
