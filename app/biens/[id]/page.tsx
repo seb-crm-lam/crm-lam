@@ -7,6 +7,7 @@ import {
   getBienPrestations,
   calculerFeuVert,
   getContact,
+  getPresentationsPourBien,
   getBienDocuments,
   getVisitesPourBien,
   listContacts,
@@ -56,6 +57,7 @@ export default function FicheBienPage({
   const proprietaire = bien.proprietaireId ? getContact(bien.proprietaireId) : undefined;
   const apporteur = bien.apporteurId ? getContact(bien.apporteurId) : undefined;
   const documents = getBienDocuments(bien.id);
+  const presentesA = getPresentationsPourBien(bien.id);
   const visites = getVisitesPourBien(bien.id);
   const fondsActif = blocFondsActif(bien);
   const contactsCandidats = fondsActif ? listContacts().filter((c) => !c.anonymise) : [];
@@ -245,6 +247,27 @@ export default function FicheBienPage({
                 <div>{bien.typeOrigine ?? "—"}</div>
               </div>
             </div>
+          </div>
+
+          <div className="card p-5">
+            <div className="label-sm mb-3">Présenté à</div>
+            {presentesA.length === 0 ? (
+              <p className="text-sm text-muted">Présenté à personne.</p>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {presentesA.map((p) => (
+                  <li key={p.contactId} className="flex gap-3">
+                    <span className="label-sm shrink-0 w-24">{formatDate(p.date)}</span>
+                    <span>
+                      <Link href={`/contacts/${p.contactId}`} className="text-accent hover:underline">
+                        {p.contactNom}
+                      </Link>
+                      {p.notes.length > 0 && <span className="text-muted"> · {p.notes.join(" · ")}</span>}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="card p-5">

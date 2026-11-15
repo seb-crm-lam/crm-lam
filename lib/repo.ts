@@ -772,3 +772,64 @@ export function getBiensAPublier(aujourdhui: string): BienAPublier[] {
   // Jamais publiés d'abord, puis les plus anciens.
   return resultat.sort((a, b) => (a.dernierePublication ?? "").localeCompare(b.dernierePublication ?? ""));
 }
+
+
+// ---------------------------------------------------------------------------
+// Biens présentés — vue calculée sur l'historique (envois WhatsApp, visites,
+// saisies manuelles « bien_presente »), hors envois annulés. Rien n'est stocké
+// en plus : une ligne par couple contact / bien.
+// ---------------------------------------------------------------------------
+
+export type Presentation = {
+  bienId: string;
+  reference: string;
+  titre: string | null;
+  contactId: string;
+  contactNom: string;
+  date: string;
+  notes: string[];
+};
+
+function presentations(filtreSql: string, param: string): Presentation[] {
+  const lignes = db
+    .prepare(
+      `SELECT e.typeEvenement AS type, e.dateEvenement AS date, e.detail AS detail,
+              b.id AS bienId, b.reference AS reference, b.titre AS titre,
+              c.id AS contactId, TRIM(COALESCE(c.prenom || ' ', '') || c.nom) AS contactNom
+         FROM Evenement e
+         JOIN Bien b ON b.id = e.bienId
+         JOIN Contact c ON c.id = e.contactId
+        WHERE ${filtreSql} AND e.typeEvenement <> 'whatsapp_non_envoye'
+          AND NOT EXISTS (SELECT 1 FROM Evenement a WHERE a.typeEvenement = 'whatsapp_non_envoye' AND a.evenementLieId = e.id)
+        ORDER BY e.dateEvenement DESC`
+    )
+    .all(param) as {
+    type: string;
+    date: string;
+    detail: string | null;
+    bienId: string;
+    reference: string;
+    titre: string | null;
+    contactId: string;
+    contactNom: string;
+  }[];
+  const parCouple = new Map<string, Presentation>();
+  for (const l of lignes) {
+    const cle = `${l.contactId}|${l.bienId}`;
+    let p = parCouple.get(cle);
+    if (!p) {
+      p = { bienId: l.bienId, reference: l.reference, titre: l.titre, contactId: l.contactId, contactNom: l.contactNom, date: l.date, notes: [] };
+      parCouple.set(cle, p);
+    }
+    if (l.type === "bien_presente" && l.detail) p.notes.push(l.detail);
+  }
+  return Array.from(parCouple.values());
+}
+
+export function getPresentationsPourContact(contactId: string): Presentation[] {
+  return presentations("e.contactId = ?", contactId);
+}
+
+export function getPresentationsPourBien(bienId: string): Presentation[] {
+  return presentations("e.bienId = ?", bienId);
+}

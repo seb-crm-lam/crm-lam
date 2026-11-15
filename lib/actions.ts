@@ -906,3 +906,37 @@ export async function marquerTexteQuartierPublie(quartierId: string) {
   if (resultat.changes === 0) throw new Error("Quartier introuvable.");
   revalidatePath("/journee");
 }
+
+
+// ---------------------------------------------------------------------------
+// Bien présenté à la main (15 novembre 2026) — de vive voix, au téléphone, par
+// lien Instagram… Peu importe le canal : seuls le bien, la date et une note
+// facultative sont saisis. Inscrit dans l'historique (append-only), type
+// « bien_presente ».
+// ---------------------------------------------------------------------------
+
+export async function ajouterBienPresente(contactId: string, formData: FormData) {
+  const bienId = champTexte(formData, "bienId");
+  const dateSaisie = champTexte(formData, "date");
+  const note = champTexte(formData, "note");
+  if (!bienId || !getBien(bienId)) return;
+
+  const aujourdhui = new Date().toISOString();
+  const date =
+    dateSaisie && /^\d{4}-\d{2}-\d{2}$/.test(dateSaisie) && dateSaisie !== aujourdhui.slice(0, 10)
+      ? `${dateSaisie}T12:00:00.000Z`
+      : aujourdhui;
+
+  db.prepare(
+    `INSERT INTO Evenement (id, contactId, bienId, typeEvenement, dateEvenement, detail)
+     VALUES (@id, @contactId, @bienId, 'bien_presente', @date, @detail)`
+  ).run({ id: randomUUID(), contactId, bienId, date, detail: note });
+  // Une présentation est un contact réel : elle repousse le dernier contact.
+  db.prepare(
+    `UPDATE Contact SET dateDernierContact = @date
+      WHERE id = @id AND (dateDernierContact IS NULL OR dateDernierContact < @date)`
+  ).run({ id: contactId, date });
+  revalidatePath(`/contacts/${contactId}`);
+  revalidatePath(`/biens/${bienId}`);
+  revalidatePath("/contacts");
+}

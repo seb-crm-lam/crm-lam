@@ -5,7 +5,10 @@ import {
   getRecherchesForContact,
   getEvenementsForContact,
   getBonsVisitePourContact,
+  getPresentationsPourContact,
+  listBiens,
 } from "@/lib/repo";
+import { ajouterBienPresente } from "@/lib/actions";
 import {
   formatDh,
   formatFourchetteM2,
@@ -33,6 +36,7 @@ const EVENEMENT_LABELS: Record<string, string> = {
   visite: "Visite",
   envoi_whatsapp: "WhatsApp envoyé",
   recherche_creee: "Recherche créée",
+  bien_presente: "Bien présenté",
 };
 
 const STATUT_LABELS: Record<string, string> = {
@@ -53,6 +57,9 @@ export default function FicheContactPage({ params }: { params: { id: string } })
   const recherches = getRecherchesForContact(contact.id);
   const evenements = getEvenementsForContact(contact.id);
   const bonsVisite = getBonsVisitePourContact(contact.id);
+  const presentations = getPresentationsPourContact(contact.id);
+  const biensAPresenter = listBiens().filter((b) => b.diffusionEtat !== "archive");
+  const aujourdhui = new Date().toISOString().slice(0, 10);
   // Lien « Présenté par » vers l'autre fiche contact.
   const presentePar = contact.presenteParId ? getContact(contact.presenteParId) : undefined;
   const nomContact = (c: { prenom: string | null; nom: string }) => (c.prenom ? `${c.prenom} ${c.nom}` : c.nom);
@@ -230,6 +237,48 @@ export default function FicheContactPage({ params }: { params: { id: string } })
               ))}
             </div>
           )}
+
+          <div className="card p-5">
+            <div className="label-sm mb-3">Biens présentés</div>
+            {presentations.length === 0 ? (
+              <p className="text-sm text-muted">Aucun bien présenté.</p>
+            ) : (
+              <ul className="space-y-3">
+                {presentations.map((p) => (
+                  <li key={p.bienId} className="text-sm flex gap-3">
+                    <span className="label-sm shrink-0 w-24">{formatDate(p.date)}</span>
+                    <span>
+                      <Link href={`/biens/${p.bienId}`} className="text-accent hover:underline">
+                        {p.reference}
+                        {p.titre ? ` — ${p.titre}` : ""}
+                      </Link>
+                      {p.notes.length > 0 && <span className="text-muted"> · {p.notes.join(" · ")}</span>}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <details className="mt-4">
+              <summary className="btn-secondary inline-block cursor-pointer">+ Bien présenté</summary>
+              <form action={ajouterBienPresente.bind(null, contact.id)} className="mt-3 space-y-3">
+                <select name="bienId" required defaultValue="" className="input">
+                  <option value="" disabled>
+                    Choisir un bien…
+                  </option>
+                  {biensAPresenter.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.reference} — {b.titre}
+                    </option>
+                  ))}
+                </select>
+                <input type="date" name="date" defaultValue={aujourdhui} className="input" />
+                <textarea name="note" rows={2} placeholder="Note (facultatif)" className="input" />
+                <button type="submit" className="btn-primary">
+                  Enregistrer
+                </button>
+              </form>
+            </details>
+          </div>
 
           <div className="card p-5">
             <div className="label-sm mb-3">Historique</div>
