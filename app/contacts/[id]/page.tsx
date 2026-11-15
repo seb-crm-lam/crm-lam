@@ -58,6 +58,7 @@ export default function FicheContactPage({ params }: { params: { id: string } })
   const evenements = getEvenementsForContact(contact.id);
   const bonsVisite = getBonsVisitePourContact(contact.id);
   const presentations = getPresentationsPourContact(contact.id);
+  const referencesBiens = new Map(listBiens().map((b) => [b.id, b.reference]));
   const biensAPresenter = listBiens().filter((b) => b.diffusionEtat !== "archive");
   const aujourdhui = new Date().toISOString().slice(0, 10);
   // Lien « Présenté par » vers l'autre fiche contact.
@@ -317,6 +318,14 @@ export default function FicheContactPage({ params }: { params: { id: string } })
                     <span className="label-sm shrink-0 w-24">{formatDateHeure(e.dateEvenement)}</span>
                     <span>
                       <span className="font-medium">{EVENEMENT_LABELS[e.typeEvenement] ?? e.typeEvenement}</span>
+                      {e.bienId && referencesBiens.get(e.bienId) && (
+                        <>
+                          {" — "}
+                          <Link href={`/biens/${e.bienId}`} className="font-medium text-accent hover:underline">
+                            {referencesBiens.get(e.bienId)}
+                          </Link>
+                        </>
+                      )}
                       {e.detail ? ` — ${e.detail}` : ""}
                     </span>
                   </li>
