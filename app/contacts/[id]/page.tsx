@@ -8,7 +8,7 @@ import {
   getPresentationsPourContact,
   listBiens,
 } from "@/lib/repo";
-import { ajouterBienPresente } from "@/lib/actions";
+import { ajouterBienPresente, modifierBienPresente, supprimerBienPresente } from "@/lib/actions";
 import {
   formatDh,
   formatFourchetteM2,
@@ -252,7 +252,33 @@ export default function FicheContactPage({ params }: { params: { id: string } })
                         {p.reference}
                         {p.titre ? ` — ${p.titre}` : ""}
                       </Link>
-                      {p.notes.length > 0 && <span className="text-muted"> · {p.notes.join(" · ")}</span>}
+                      {p.saisies.length > 0 && (
+                        <ul className="mt-1 space-y-1">
+                          {p.saisies.map((s) => (
+                            <li key={s.id} className="text-xs text-muted">
+                              <span>
+                                {formatDate(s.date)}
+                                {s.note ? ` · ${s.note}` : " · (sans note)"}
+                              </span>
+                              <details className="inline-block ml-2 align-top">
+                                <summary className="cursor-pointer text-accent">Modifier</summary>
+                                <form action={modifierBienPresente.bind(null, s.id)} className="mt-2 space-y-2">
+                                  <input type="date" name="date" defaultValue={s.date.slice(0, 10)} className="input" />
+                                  <textarea name="note" rows={2} defaultValue={s.note ?? ""} className="input" />
+                                  <button type="submit" className="btn-primary">
+                                    Enregistrer
+                                  </button>
+                                </form>
+                              </details>
+                              <form action={supprimerBienPresente.bind(null, s.id)} className="inline ml-2">
+                                <button type="submit" className="text-accent hover:underline">
+                                  Supprimer
+                                </button>
+                              </form>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </span>
                   </li>
                 ))}

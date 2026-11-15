@@ -915,17 +915,38 @@ export async function marquerTexteQuartierPublie(quartierId: string) {
 // « bien_presente ».
 // ---------------------------------------------------------------------------
 
+function dateEvenementDepuisSaisie(dateSaisie: string | null): string {
+  const maintenant = new Date().toISOString();
+  return dateSaisie && /^\d{4}-\d{2}-\d{2}$/.test(dateSaisie) && dateSaisie !== maintenant.slice(0, 10)
+    ? `${dateSaisie}T12:00:00.000Z`
+    : maintenant;
+}
+
+// Dernier contact = événement le plus récent hors envois annulés (même règle
+// que la correction d'un envoi WhatsApp).
+function recalculerDernierContact(contactId: string) {
+  const dernier = db
+    .prepare(
+      `SELECT e.dateEvenement AS d FROM Evenement e
+       WHERE e.contactId = ?
+         AND e.typeEvenement <> 'whatsapp_non_envoye'
+         AND NOT EXISTS (SELECT 1 FROM Evenement a WHERE a.typeEvenement = 'whatsapp_non_envoye' AND a.evenementLieId = e.id)
+       ORDER BY julianday(e.dateEvenement) DESC LIMIT 1`
+    )
+    .get(contactId) as { d: string | null } | undefined;
+  if (dernier?.d) {
+    db.prepare(`UPDATE Contact SET dateDernierContact = @d WHERE id = @id`).run({
+      id: contactId,
+      d: dateSqliteVersIso(dernier.d),
+    });
+  }
+}
+
 export async function ajouterBienPresente(contactId: string, formData: FormData) {
   const bienId = champTexte(formData, "bienId");
-  const dateSaisie = champTexte(formData, "date");
   const note = champTexte(formData, "note");
   if (!bienId || !getBien(bienId)) return;
-
-  const aujourdhui = new Date().toISOString();
-  const date =
-    dateSaisie && /^\d{4}-\d{2}-\d{2}$/.test(dateSaisie) && dateSaisie !== aujourdhui.slice(0, 10)
-      ? `${dateSaisie}T12:00:00.000Z`
-      : aujourdhui;
+  const date = dateEvenementDepuisSaisie(champTexte(formData, "date"));
 
   db.prepare(
     `INSERT INTO Evenement (id, contactId, bienId, typeEvenement, dateEvenement, detail)
@@ -938,5 +959,45 @@ export async function ajouterBienPresente(contactId: string, formData: FormData)
   ).run({ id: contactId, date });
   revalidatePath(`/contacts/${contactId}`);
   revalidatePath(`/biens/${bienId}`);
+  revalidatePath("/contacts");
+}
+
+// Modification / suppression d'une saisie manuelle (15 novembre 2026, demande
+// de Seb). Seuls les événements « bien_presente » sont concernés : les envois
+// WhatsApp et le reste de l'historique ne sont jamais touchés.
+export async function modifierBienPresente(evenementId: string, formData: FormData) {
+  const ev = db
+    .prepare(`SELECT contactId, bienId FROM Evenement WHERE id = ? AND typeEvenement = 'bien_presente'`)
+    .get(evenementId) as { contactId: string | null; bienId: string | null } | undefined;
+  if (!ev) return;
+  const dateSaisie = champTexte(formData, "date");
+  const note = champTexte(formData, "note");
+  // La date n'est réécrite que si elle a changé : sinon l'heure d'origine est gardée.
+  const actuelle = db.prepare(`SELECT dateEvenement AS d FROM Evenement WHERE id = ?`).get(evenementId) as { d: string };
+  const date = dateSaisie && dateSaisie === actuelle.d.slice(0, 10) ? actuelle.d : dateEvenementDepuisSaisie(dateSaisie);
+  db.prepare(`UPDATE Evenement SET dateEvenement = @date, detail = @note WHERE id = @id`).run({
+    id: evenementId,
+    date,
+    note,
+  });
+  if (ev.contactId) {
+    recalculerDernierContact(ev.contactId);
+    revalidatePath(`/contacts/${ev.contactId}`);
+  }
+  if (ev.bienId) revalidatePath(`/biens/${ev.bienId}`);
+  revalidatePath("/contacts");
+}
+
+export async function supprimerBienPresente(evenementId: string) {
+  const ev = db
+    .prepare(`SELECT contactId, bienId FROM Evenement WHERE id = ? AND typeEvenement = 'bien_presente'`)
+    .get(evenementId) as { contactId: string | null; bienId: string | null } | undefined;
+  if (!ev) return;
+  db.prepare(`DELETE FROM Evenement WHERE id = ? AND typeEvenement = 'bien_presente'`).run(evenementId);
+  if (ev.contactId) {
+    recalculerDernierContact(ev.contactId);
+    revalidatePath(`/contacts/${ev.contactId}`);
+  }
+  if (ev.bienId) revalidatePath(`/biens/${ev.bienId}`);
   revalidatePath("/contacts");
 }

@@ -788,12 +788,14 @@ export type Presentation = {
   contactNom: string;
   date: string;
   notes: string[];
+  // Saisies manuelles (modifiables / supprimables), une par enregistrement.
+  saisies: { id: string; date: string; note: string | null }[];
 };
 
 function presentations(filtreSql: string, param: string): Presentation[] {
   const lignes = db
     .prepare(
-      `SELECT e.typeEvenement AS type, e.dateEvenement AS date, e.detail AS detail,
+      `SELECT e.id AS id, e.typeEvenement AS type, e.dateEvenement AS date, e.detail AS detail,
               b.id AS bienId, b.reference AS reference, b.titre AS titre,
               c.id AS contactId, TRIM(COALESCE(c.prenom || ' ', '') || c.nom) AS contactNom
          FROM Evenement e
@@ -804,6 +806,7 @@ function presentations(filtreSql: string, param: string): Presentation[] {
         ORDER BY e.dateEvenement DESC`
     )
     .all(param) as {
+    id: string;
     type: string;
     date: string;
     detail: string | null;
@@ -818,10 +821,13 @@ function presentations(filtreSql: string, param: string): Presentation[] {
     const cle = `${l.contactId}|${l.bienId}`;
     let p = parCouple.get(cle);
     if (!p) {
-      p = { bienId: l.bienId, reference: l.reference, titre: l.titre, contactId: l.contactId, contactNom: l.contactNom, date: l.date, notes: [] };
+      p = { bienId: l.bienId, reference: l.reference, titre: l.titre, contactId: l.contactId, contactNom: l.contactNom, date: l.date, notes: [], saisies: [] };
       parCouple.set(cle, p);
     }
-    if (l.type === "bien_presente" && l.detail) p.notes.push(l.detail);
+    if (l.type === "bien_presente") {
+      if (l.detail) p.notes.push(l.detail);
+      p.saisies.push({ id: l.id, date: l.date, note: l.detail });
+    }
   }
   return Array.from(parCouple.values());
 }
