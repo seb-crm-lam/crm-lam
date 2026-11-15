@@ -411,10 +411,21 @@ export default function BienFormClient({ bien, quartiers, contacts, prestations,
               ))}
             </select>
           </Champ>
+          {/* 15 novembre 2026 : le menu ne liste pas les contacts « En recherche »
+              (acquéreurs), sauf s'ils apportent des biens (« Ce qu'il apporte » =
+              biens ou les deux). L'apporteur déjà enregistré reste toujours listé. */}
           <Champ label="Apporteur">
             <select name="apporteurId" defaultValue={bien?.apporteurId ?? ""} className="input">
               <option value="">—</option>
-              {contacts.map((c) => (
+              {contacts
+                .filter(
+                  (c) =>
+                    c.id === bien?.apporteurId ||
+                    c.statut !== "en_recherche" ||
+                    c.apportCategorie === "biens" ||
+                    c.apportCategorie === "les_deux",
+                )
+                .map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.prenom ? `${c.prenom} ${c.nom}` : c.nom}
                 </option>
