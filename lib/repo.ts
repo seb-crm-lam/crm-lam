@@ -239,6 +239,23 @@ export function listContactsAvecRechercheActive(): (Contact & { rechercheActive:
   }));
 }
 
+// Biens déjà proposés à un contact (même définition que « Biens proposés » de
+// la fiche contact : événement lié au bien, hors envois annulés). Renvoie, par
+// bien, la date de la dernière proposition. Calculé, jamais saisi.
+export function getBiensProposesPourContact(contactId: string): Map<string, string> {
+  const lignes = db
+    .prepare(
+      `SELECT e.bienId AS bienId, MAX(e.dateEvenement) AS derniere
+         FROM Evenement e
+        WHERE e.contactId = ? AND e.bienId IS NOT NULL
+          AND e.typeEvenement <> 'whatsapp_non_envoye'
+          AND NOT EXISTS (SELECT 1 FROM Evenement a WHERE a.typeEvenement = 'whatsapp_non_envoye' AND a.evenementLieId = e.id)
+        GROUP BY e.bienId`
+    )
+    .all(contactId) as { bienId: string; derniere: string }[];
+  return new Map(lignes.map((l) => [l.bienId, l.derniere]));
+}
+
 export function getContact(id: string): Contact | undefined {
   const row = db.prepare(`SELECT * FROM Contact WHERE id = ?`).get(id);
   return row ? mapContact(row) : undefined;

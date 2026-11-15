@@ -3,11 +3,12 @@ import {
   listContacts,
   listBiens,
   getRecherchesForContact,
+  getBiensProposesPourContact,
   matchBiensPourRecherche,
   matchRecherchesPourBien,
   type NiveauCorrespondance,
 } from "@/lib/repo";
-import { formatDh, formatFourchetteM2, formatFourchetteChambres, ETAT_RECHERCHE_LABELS, TYPE_BIEN_LABELS } from "@/lib/format";
+import { formatDate, formatDh, formatFourchetteM2, formatFourchetteChambres, ETAT_RECHERCHE_LABELS, TYPE_BIEN_LABELS } from "@/lib/format";
 import EnvoyerWhatsapp from "@/components/EnvoyerWhatsapp";
 import { getBienPrestations } from "@/lib/repo";
 import { preparerEnvoi, libelleCourt } from "@/lib/documents/fiche-client";
@@ -71,6 +72,7 @@ export default function RapprochementPage({
   const matchesParRecherche = recherche
     ? matchBiensPourRecherche(recherche, { includeExclus: voirExclus })
     : [];
+  const biensProposes = contactId ? getBiensProposesPourContact(contactId) : new Map<string, string>();
 
   const bien = biens.find((b) => b.id === bienId);
   const matchesParBien = bien ? matchRecherchesPourBien(bien, { includeExclus: voirExclus }) : [];
@@ -197,6 +199,11 @@ export default function RapprochementPage({
                             {m.bien.titre}
                             {m.bien.diffusionEtat === "off_market" && (
                               <span className="pill pill-accent ml-2">Off-market</span>
+                            )}
+                            {biensProposes.has(m.bien.id) && (
+                              <span className="pill pill-neutral ml-2 whitespace-nowrap">
+                                ✓ Proposé le {formatDate(biensProposes.get(m.bien.id))}
+                              </span>
                             )}
                             <div className="md:hidden label-sm mt-1">
                               {m.bien.prixSurDemande ? "Sur demande" : formatDh(m.bien.prixVente)}
