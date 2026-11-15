@@ -9,6 +9,7 @@ import type { Contact } from "@/lib/types";
 // « En recherche ».
 const STATUT_OPTIONS = [
   { value: "apporteur", label: "Apporteur" },
+  { value: "proprietaire", label: "Propriétaire" },
   { value: "en_recherche", label: "En recherche" },
   { value: "abouti", label: "Abouti" },
   { value: "inactif", label: "Inactif" },
