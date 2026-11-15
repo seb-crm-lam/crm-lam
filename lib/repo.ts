@@ -207,24 +207,24 @@ export function listContacts(): Contact[] {
 
 // Pour l'écran liste : ajoute le signal « a une recherche active » sans
 // obliger chaque appelant à recharger les recherches séparément.
-export type BienPropose = { id: string; reference: string };
+export type BienPropose = { id: string; reference: string; titre: string | null };
 
 export function listContactsAvecRechercheActive(): (Contact & { rechercheActive: boolean; biensProposes: BienPropose[] })[] {
   // « Biens proposés » : biens liés à un événement du contact (envoi WhatsApp,
   // visite…), hors envois annulés (« WhatsApp non parti »). Calculé, jamais saisi.
   const lignes = db
     .prepare(
-      `SELECT DISTINCT e.contactId AS contactId, b.id AS id, b.reference AS reference
+      `SELECT DISTINCT e.contactId AS contactId, b.id AS id, b.reference AS reference, b.titre AS titre
          FROM Evenement e JOIN Bien b ON b.id = e.bienId
         WHERE e.contactId IS NOT NULL AND e.typeEvenement <> 'whatsapp_non_envoye'
           AND NOT EXISTS (SELECT 1 FROM Evenement a WHERE a.typeEvenement = 'whatsapp_non_envoye' AND a.evenementLieId = e.id)
         ORDER BY b.reference`
     )
-    .all() as { contactId: string; id: string; reference: string }[];
+    .all() as { contactId: string; id: string; reference: string; titre: string | null }[];
   const biensParContact = new Map<string, BienPropose[]>();
   for (const l of lignes) {
     const liste = biensParContact.get(l.contactId) ?? [];
-    liste.push({ id: l.id, reference: l.reference });
+    liste.push({ id: l.id, reference: l.reference, titre: l.titre });
     biensParContact.set(l.contactId, liste);
   }
   const idsAvecRecherche = new Set(

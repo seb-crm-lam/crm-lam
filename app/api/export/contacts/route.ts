@@ -60,7 +60,7 @@ export async function GET() {
         c.apportCategorie ? APPORT_CATEGORIE_LABELS[c.apportCategorie] ?? c.apportCategorie : "",
         c.presenteParId ? nomParId.get(c.presenteParId) ?? "" : "",
         c.notePresentation ?? "",
-        c.biensProposes.map((b) => b.reference).join(", "),
+        c.biensProposes.map((b) => (b.titre ? `${b.reference} — ${b.titre}` : b.reference)).join(" | "),
         c.dateDernierContact ?? "",
       ]
         .map(csvEchapper)

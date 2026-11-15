@@ -16,7 +16,7 @@ const STATUT_LABELS: Record<string, string> = {
   perdu: "Perdu",
 };
 
-type ContactAvecRecherche = Contact & { rechercheActive: boolean; biensProposes: { id: string; reference: string }[] };
+type ContactAvecRecherche = Contact & { rechercheActive: boolean; biensProposes: { id: string; reference: string; titre: string | null }[] };
 
 export default function ContactsTable({ contacts }: { contacts: ContactAvecRecherche[] }) {
   const [recherche, setRecherche] = useState("");
@@ -135,7 +135,7 @@ export default function ContactsTable({ contacts }: { contacts: ContactAvecReche
               </div>
               {c.biensProposes.length > 0 && (
                 <div className="mt-2 text-xs text-muted">
-                  Biens proposés : {c.biensProposes.map((b) => b.reference).join(", ")}
+                  Biens proposés : {c.biensProposes.map((b) => (b.titre ? `${b.reference} — ${b.titre}` : b.reference)).join(", ")}
                 </div>
               )}
               {(c.typeApporteur || c.apportCategorie || c.presenteParId) && (
@@ -212,10 +212,11 @@ export default function ContactsTable({ contacts }: { contacts: ContactAvecReche
                   </td>
                   <td className="px-4 py-3">
                     {c.biensProposes.length > 0 ? (
-                      <div className="flex flex-wrap gap-x-2 gap-y-1">
+                      <div className="flex flex-col gap-1">
                         {c.biensProposes.map((b) => (
                           <Link key={b.id} href={`/biens/${b.id}`} className="text-accent hover:underline">
                             {b.reference}
+                            {b.titre ? ` — ${b.titre}` : ""}
                           </Link>
                         ))}
                       </div>
