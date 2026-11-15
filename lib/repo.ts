@@ -256,6 +256,22 @@ export function getBiensProposesPourContact(contactId: string): Map<string, stri
   return new Map(lignes.map((l) => [l.bienId, l.derniere]));
 }
 
+// Sens inverse : contacts à qui un bien a déjà été proposé, avec la date de la
+// dernière proposition (même règle que ci-dessus).
+export function getContactsAyantRecuBien(bienId: string): Map<string, string> {
+  const lignes = db
+    .prepare(
+      `SELECT e.contactId AS contactId, MAX(e.dateEvenement) AS derniere
+         FROM Evenement e
+        WHERE e.bienId = ? AND e.contactId IS NOT NULL
+          AND e.typeEvenement <> 'whatsapp_non_envoye'
+          AND NOT EXISTS (SELECT 1 FROM Evenement a WHERE a.typeEvenement = 'whatsapp_non_envoye' AND a.evenementLieId = e.id)
+        GROUP BY e.contactId`
+    )
+    .all(bienId) as { contactId: string; derniere: string }[];
+  return new Map(lignes.map((l) => [l.contactId, l.derniere]));
+}
+
 export function getContact(id: string): Contact | undefined {
   const row = db.prepare(`SELECT * FROM Contact WHERE id = ?`).get(id);
   return row ? mapContact(row) : undefined;

@@ -4,6 +4,7 @@ import {
   listBiens,
   getRecherchesForContact,
   getBiensProposesPourContact,
+  getContactsAyantRecuBien,
   matchBiensPourRecherche,
   matchRecherchesPourBien,
   type NiveauCorrespondance,
@@ -76,6 +77,7 @@ export default function RapprochementPage({
 
   const bien = biens.find((b) => b.id === bienId);
   const matchesParBien = bien ? matchRecherchesPourBien(bien, { includeExclus: voirExclus }) : [];
+  const contactsAyantRecu = bien ? getContactsAyantRecuBien(bien.id) : new Map<string, string>();
 
   const paramsBase = new URLSearchParams();
   paramsBase.set("mode", mode);
@@ -283,6 +285,11 @@ export default function RapprochementPage({
                               </Link>
                             ) : (
                               "—"
+                            )}
+                            {contact && contactsAyantRecu.has(contact.id) && (
+                              <span className="pill pill-neutral ml-2 whitespace-nowrap">
+                                ✓ Proposé le {formatDate(contactsAyantRecu.get(contact.id))}
+                              </span>
                             )}
                             <div className="md:hidden label-sm mt-1">Budget : {formatDh(m.recherche.budgetMax)}</div>
                           </td>
