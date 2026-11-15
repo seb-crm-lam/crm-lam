@@ -31,7 +31,7 @@ export default function ContactForm({ contact }: { contact?: Contact }) {
   const racines = quartiers.filter((q) => !q.quartierParentId).sort(trierNom);
   const enfants = (id: string) => quartiers.filter((q) => q.quartierParentId === id).sort(trierNom);
   const quartiersCoches = new Set(recherche?.quartierIds ?? []);
-  // Menus « Présenté par » / « Apporté par » : les autres fiches contact.
+  // Menu « Présenté par » : les autres fiches contact.
   const autresContacts = listContacts()
     .filter((c) => c.id !== contact?.id && !c.anonymise)
     .map((c) => ({ id: c.id, nom: c.prenom ? `${c.prenom} ${c.nom}` : c.nom }))
@@ -227,8 +227,7 @@ export default function ContactForm({ contact }: { contact?: Contact }) {
 
       {/* 16 octobre 2026 — qualification des apporteurs d'affaires. Tous ces
           champs sont facultatifs ; « Présenté par » = le contact qui a présenté
-          cet apporteur, « Apporté par » = l'apporteur qui a amené ce contact
-          comme client. */}
+          cet apporteur. */}
       <div className="card p-5 space-y-4">
         <div className="label-sm">Apporteur</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -262,16 +261,6 @@ export default function ContactForm({ contact }: { contact?: Contact }) {
               ))}
             </select>
           </Champ>
-          <Champ label="Apporté par (fiche contact)">
-            <select name="apporteParId" defaultValue={contact?.apporteParId ?? ""} className="input">
-              <option value="">—</option>
-              {autresContacts.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nom}
-                </option>
-              ))}
-            </select>
-          </Champ>
         </div>
         <Champ label="Note sur la présentation">
           <textarea
@@ -282,8 +271,7 @@ export default function ContactForm({ contact }: { contact?: Contact }) {
           />
         </Champ>
         <p className="text-xs text-muted">
-          « Présenté par » : le contact qui vous a présenté cet apporteur. « Apporté par » : l'apporteur qui vous a
-          amené ce contact comme client.
+          « Présenté par » : le contact qui vous a présenté cet apporteur.
         </p>
       </div>
 

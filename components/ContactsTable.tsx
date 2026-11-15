@@ -16,7 +16,7 @@ const STATUT_LABELS: Record<string, string> = {
   perdu: "Perdu",
 };
 
-type ContactAvecRecherche = Contact & { rechercheActive: boolean };
+type ContactAvecRecherche = Contact & { rechercheActive: boolean; biensProposes: { id: string; reference: string }[] };
 
 export default function ContactsTable({ contacts }: { contacts: ContactAvecRecherche[] }) {
   const [recherche, setRecherche] = useState("");
@@ -25,7 +25,7 @@ export default function ContactsTable({ contacts }: { contacts: ContactAvecReche
   const [consentement, setConsentement] = useState(""); // "", "oui", "non"
   const [tri, setTri] = useState<"recent" | "ancien">("recent");
 
-  // Nom des contacts, pour afficher « Présenté par » / « Apporté par ».
+  // Nom des contacts, pour afficher « Présenté par ».
   const nomParId = useMemo(() => {
     const m = new Map<string, string>();
     for (const c of contacts) m.set(c.id, c.prenom ? `${c.prenom} ${c.nom}` : c.nom);
@@ -133,7 +133,12 @@ export default function ContactsTable({ contacts }: { contacts: ContactAvecReche
                 <span>Dernier contact : {formatDate(c.dateDernierContact)}</span>
                 {c.rechercheActive && <span className="chip">Recherche active</span>}
               </div>
-              {(c.typeApporteur || c.apportCategorie || c.presenteParId || c.apporteParId) && (
+              {c.biensProposes.length > 0 && (
+                <div className="mt-2 text-xs text-muted">
+                  Biens proposés : {c.biensProposes.map((b) => b.reference).join(", ")}
+                </div>
+              )}
+              {(c.typeApporteur || c.apportCategorie || c.presenteParId) && (
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
                   {c.typeApporteur && (
                     <span>
@@ -142,7 +147,6 @@ export default function ContactsTable({ contacts }: { contacts: ContactAvecReche
                     </span>
                   )}
                   {c.presenteParId && <span>Présenté par {nomParId.get(c.presenteParId) ?? "—"}</span>}
-                  {c.apporteParId && <span>Apporté par {nomParId.get(c.apporteParId) ?? "—"}</span>}
                 </div>
               )}
             </li>
@@ -159,7 +163,7 @@ export default function ContactsTable({ contacts }: { contacts: ContactAvecReche
               <th className="px-4 py-3 font-medium">Statut</th>
               <th className="px-4 py-3 font-medium">Apporteur</th>
               <th className="px-4 py-3 font-medium">Présenté par</th>
-              <th className="px-4 py-3 font-medium">Apporté par</th>
+              <th className="px-4 py-3 font-medium">Biens proposés</th>
               <th className="px-4 py-3 font-medium">Dernier contact</th>
             </tr>
           </thead>
@@ -207,10 +211,14 @@ export default function ContactsTable({ contacts }: { contacts: ContactAvecReche
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    {c.apporteParId ? (
-                      <Link href={`/contacts/${c.apporteParId}`} className="text-accent hover:underline">
-                        {nomParId.get(c.apporteParId) ?? "—"}
-                      </Link>
+                    {c.biensProposes.length > 0 ? (
+                      <div className="flex flex-wrap gap-x-2 gap-y-1">
+                        {c.biensProposes.map((b) => (
+                          <Link key={b.id} href={`/biens/${b.id}`} className="text-accent hover:underline">
+                            {b.reference}
+                          </Link>
+                        ))}
+                      </div>
                     ) : (
                       <span className="text-muted">—</span>
                     )}

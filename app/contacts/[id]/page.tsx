@@ -53,15 +53,13 @@ export default function FicheContactPage({ params }: { params: { id: string } })
   const recherches = getRecherchesForContact(contact.id);
   const evenements = getEvenementsForContact(contact.id);
   const bonsVisite = getBonsVisitePourContact(contact.id);
-  // Liens « Présenté par » / « Apporté par » vers les autres fiches contact.
+  // Lien « Présenté par » vers l'autre fiche contact.
   const presentePar = contact.presenteParId ? getContact(contact.presenteParId) : undefined;
-  const apportePar = contact.apporteParId ? getContact(contact.apporteParId) : undefined;
   const nomContact = (c: { prenom: string | null; nom: string }) => (c.prenom ? `${c.prenom} ${c.nom}` : c.nom);
   const aUnBlocApporteur = Boolean(
     contact.typeApporteur ||
       contact.apportCategorie ||
       contact.presenteParId ||
-      contact.apporteParId ||
       contact.notePresentation
   );
   const cinMasque = contact.cinPasseport
@@ -146,16 +144,6 @@ export default function FicheContactPage({ params }: { params: { id: string } })
                 </div>
                 <div className="label-sm">Note sur la présentation</div>
                 <div>{contact.notePresentation ?? "—"}</div>
-                <div className="label-sm">Apporté par</div>
-                <div>
-                  {apportePar ? (
-                    <Link href={`/contacts/${apportePar.id}`} className="text-accent hover:underline">
-                      {nomContact(apportePar)}
-                    </Link>
-                  ) : (
-                    "—"
-                  )}
-                </div>
               </div>
             </div>
           )}

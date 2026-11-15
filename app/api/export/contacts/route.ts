@@ -40,7 +40,7 @@ export async function GET() {
     "Ce qu'il apporte",
     "Présenté par",
     "Note sur la présentation",
-    "Apporté par",
+    "Biens proposés",
     "Dernier contact",
   ];
 
@@ -60,7 +60,7 @@ export async function GET() {
         c.apportCategorie ? APPORT_CATEGORIE_LABELS[c.apportCategorie] ?? c.apportCategorie : "",
         c.presenteParId ? nomParId.get(c.presenteParId) ?? "" : "",
         c.notePresentation ?? "",
-        c.apporteParId ? nomParId.get(c.apporteParId) ?? "" : "",
+        c.biensProposes.map((b) => b.reference).join(", "),
         c.dateDernierContact ?? "",
       ]
         .map(csvEchapper)
