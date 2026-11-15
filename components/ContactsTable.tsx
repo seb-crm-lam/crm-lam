@@ -214,9 +214,13 @@ export default function ContactsTable({ contacts }: { contacts: ContactAvecReche
                     {c.biensProposes.length > 0 ? (
                       <div className="flex flex-col gap-1">
                         {c.biensProposes.map((b) => (
-                          <Link key={b.id} href={`/biens/${b.id}`} className="text-accent hover:underline">
+                          <Link
+                            key={b.id}
+                            href={`/biens/${b.id}`}
+                            title={b.titre ?? undefined}
+                            className="text-accent hover:underline"
+                          >
                             {b.reference}
-                            {b.titre ? ` — ${b.titre}` : ""}
                           </Link>
                         ))}
                       </div>
