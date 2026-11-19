@@ -99,10 +99,14 @@ const PRESTATIONS: PrestationSeed[] = [
 //  - 10 novembre 2026 : « Bab el Khemis », sous-quartier de la Médina —
 //    demande de Seb. Orthographe calquée sur « Dar el Bacha » (el en
 //    minuscule) ; à confirmer par Seb, puis à créer à l'identique côté site.
+//  - 19 novembre 2026 : « Zaouia Abassia », sous-quartier de la Médina —
+//    demande de Seb ; graphie « Zaouia Abassia » confirmée par Seb le
+//    19 novembre. ⚠️ À déclarer côté site (parent Médina) avant tout envoi.
 const QUARTIERS_AJOUTES: QuartierSeed[] = [
   { id: '0202ab30-6ca1-48a9-a8be-bd330d766f5b', nom: 'Route de Ouarzazate', quartierParentId: null, texteIntroductionPublie: 0, datePremierSignalement: null },
   { id: '1d342d48-77da-4cd0-9ce5-f8a5855770c3', nom: 'Victor Hugo', quartierParentId: null, texteIntroductionPublie: 0, datePremierSignalement: null },
   { id: 'c00b6845-9392-4882-b86b-a0200cac1f76', nom: 'Bab el Khemis', quartierParentId: '483fdcdc-35a8-40ab-be3b-8a830cf97021', texteIntroductionPublie: 0, datePremierSignalement: null },
+  { id: 'cf42f949-ecc0-4362-bf80-7df3ee7380f7', nom: 'Zaouia Abassia', quartierParentId: '483fdcdc-35a8-40ab-be3b-8a830cf97021', texteIntroductionPublie: 0, datePremierSignalement: null },
 ];
 
 // Prestations ajoutées après la liste de départ. Insérées au démarrage si elles
