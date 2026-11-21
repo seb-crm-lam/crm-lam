@@ -118,7 +118,7 @@ model Bien {
   apporteurId    String?
   apporteur      Contact? @relation("BienApporteur", fields: [apporteurId], references: [id])
   apporteurProcurationAuthentique Boolean?
-  typeOrigine    String? // demarchage|samsar|recommandation_client|confrere|autre — « rds » retiré le 26 septembre 2026 (sujet clos)
+  typeOrigine    String? // demarchage|samsar|recommandation_client|confrere|direct|autre — « rds » retiré le 26 septembre 2026 (sujet clos)
   acheteurId     String?
   acheteur       Contact? @relation("BienAcheteur", fields: [acheteurId], references: [id])
 
@@ -196,7 +196,7 @@ model Contact {
   anonymise              Boolean   @default(false)
   dateAnonymisation      DateTime?
   // Qualification des apporteurs d'affaires — 16/10/2026
-  typeApporteur          String? // demarchage|samsar|recommandation_client|confrere|autre
+  typeApporteur          String? // demarchage|samsar|recommandation_client|confrere|direct|autre
   apportCategorie        String? // biens|clients|les_deux
   presenteParId          String? // contact qui a présenté cet apporteur
   notePresentation       String?

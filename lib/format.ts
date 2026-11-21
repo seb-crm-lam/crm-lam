@@ -152,6 +152,7 @@ export const TYPE_ORIGINE_LABELS: Record<string, string> = {
   samsar: "Samsar",
   recommandation_client: "Recommandation client",
   confrere: "Confrère",
+  direct: "Direct", // propriétaire en direct (21 novembre 2026) ; champ « Apporteur » laissé vide
   autre: "Autre",
 };
 

@@ -54,7 +54,7 @@ const QUALITES_MANDANT = ["proprietaire", "co_indivisaire", "representant_societ
 const NATURES_VENTE = ["murs", "fonds", "murs_et_fonds"];
 // Origine du bien — liste fermée. « RDS » retiré le 26 septembre 2026
 // (sujet RDS clos, claude/CRM_LAM_decisions_26_septembre.md, point 10-11).
-const TYPES_ORIGINE = ["demarchage", "samsar", "recommandation_client", "confrere", "autre"];
+const TYPES_ORIGINE = ["demarchage", "samsar", "recommandation_client", "confrere", "direct", "autre"];
 // Fonds de commerce — état d'exploitation (A22, 14 septembre).
 const ETATS_EXPLOITATION = ["en_activite", "en_cessation"];
 
