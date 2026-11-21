@@ -35,6 +35,8 @@ export default function BiensTable({ biens }: { biens: Bien[] }) {
   const [diffusionEtat, setDiffusionEtat] = useState("");
   const [quartier, setQuartier] = useState("");
   const [mode, setMode] = useState("");
+  const [surfaceMin, setSurfaceMin] = useState("");
+  const [surfaceMax, setSurfaceMax] = useState("");
 
   const typesPresents = useMemo(() => Array.from(new Set(biens.map((b) => b.typeBien))), [biens]);
   const statutsPresents = useMemo(() => Array.from(new Set(biens.map((b) => b.statutCommercial))), [biens]);
@@ -46,6 +48,8 @@ export default function BiensTable({ biens }: { biens: Bien[] }) {
 
   const resultats = useMemo(() => {
     const q = recherche.trim().toLowerCase();
+    const min = surfaceMin.trim() === "" ? null : Number(surfaceMin.replace(",", "."));
+    const max = surfaceMax.trim() === "" ? null : Number(surfaceMax.replace(",", "."));
     return biens.filter((b) => {
       if (q) {
         const correspond =
@@ -57,9 +61,15 @@ export default function BiensTable({ biens }: { biens: Bien[] }) {
       if (diffusionEtat && b.diffusionEtat !== diffusionEtat) return false;
       if (quartier && b.quartierNom !== quartier) return false;
       if (mode && modeEntree(b) !== mode) return false;
+      // Surface au sol : un bien sans surface au sol est écarté dès qu'une borne est saisie.
+      if ((min !== null && !Number.isNaN(min)) || (max !== null && !Number.isNaN(max))) {
+        if (b.surfaceSol === null || b.surfaceSol === undefined) return false;
+        if (min !== null && !Number.isNaN(min) && b.surfaceSol < min) return false;
+        if (max !== null && !Number.isNaN(max) && b.surfaceSol > max) return false;
+      }
       return true;
     });
-  }, [biens, recherche, typeBien, statutCommercial, diffusionEtat, quartier, mode]);
+  }, [biens, recherche, typeBien, statutCommercial, diffusionEtat, quartier, mode, surfaceMin, surfaceMax]);
 
   return (
     <div className="space-y-4">
@@ -108,6 +118,29 @@ export default function BiensTable({ biens }: { biens: Bien[] }) {
           <option value="direct">Direct</option>
           <option value="via">Via intermédiaire</option>
         </select>
+        {/* Surface au sol : deux champs vides, saisis à la main (liste déroulante vide, valeurs libres). */}
+        <input
+          type="text"
+          inputMode="decimal"
+          list="surfaces-min"
+          placeholder="Surface à partir de (m²)"
+          aria-label="Surface à partir de"
+          value={surfaceMin}
+          onChange={(e) => setSurfaceMin(e.target.value)}
+          className="input md:w-auto md:min-w-[200px]"
+        />
+        <datalist id="surfaces-min" />
+        <input
+          type="text"
+          inputMode="decimal"
+          list="surfaces-max"
+          placeholder="Surface jusqu'à (m²)"
+          aria-label="Surface jusqu'à"
+          value={surfaceMax}
+          onChange={(e) => setSurfaceMax(e.target.value)}
+          className="input md:w-auto md:min-w-[200px]"
+        />
+        <datalist id="surfaces-max" />
       </div>
 
       <div className="label-sm">
