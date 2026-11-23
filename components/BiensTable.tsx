@@ -35,6 +35,7 @@ export default function BiensTable({ biens }: { biens: Bien[] }) {
   const [diffusionEtat, setDiffusionEtat] = useState("");
   const [quartier, setQuartier] = useState("");
   const [mode, setMode] = useState("");
+  const [etat, setEtat] = useState("");
   const [surfaceMin, setSurfaceMin] = useState("");
   const [surfaceMax, setSurfaceMax] = useState("");
 
@@ -61,6 +62,11 @@ export default function BiensTable({ biens }: { biens: Bien[] }) {
       if (diffusionEtat && b.diffusionEtat !== diffusionEtat) return false;
       if (quartier && b.quartierNom !== quartier) return false;
       if (mode && modeEntree(b) !== mode) return false;
+      // 23 novembre 2026 — filtre « État » (affichage seulement). « À rénover ou à démolir » = à_renover + a_demolir ;
+      // « Semi-fini » reste à part. Un bien sans état ne ressort que sous « Tous ».
+      if (etat === "en_exploitation" && b.etatBien !== "en_exploitation") return false;
+      if (etat === "a_renover_demolir" && b.etatBien !== "a_renover" && b.etatBien !== "a_demolir") return false;
+      if (etat === "semi_fini" && b.etatBien !== "semi_fini") return false;
       // Surface au sol : un bien sans surface au sol est écarté dès qu'une borne est saisie.
       if ((min !== null && !Number.isNaN(min)) || (max !== null && !Number.isNaN(max))) {
         if (b.surfaceSol === null || b.surfaceSol === undefined) return false;
@@ -69,7 +75,7 @@ export default function BiensTable({ biens }: { biens: Bien[] }) {
       }
       return true;
     });
-  }, [biens, recherche, typeBien, statutCommercial, diffusionEtat, quartier, mode, surfaceMin, surfaceMax]);
+  }, [biens, recherche, typeBien, statutCommercial, diffusionEtat, quartier, mode, etat, surfaceMin, surfaceMax]);
 
   return (
     <div className="space-y-4">
@@ -117,6 +123,12 @@ export default function BiensTable({ biens }: { biens: Bien[] }) {
           <option value="">Tous modes</option>
           <option value="direct">Direct</option>
           <option value="via">Via intermédiaire</option>
+        </select>
+        <select value={etat} onChange={(e) => setEtat(e.target.value)} className="input md:w-auto" aria-label="État">
+          <option value="">Tous états</option>
+          <option value="en_exploitation">En exploitation</option>
+          <option value="a_renover_demolir">À rénover ou à démolir</option>
+          <option value="semi_fini">Semi-fini</option>
         </select>
         {/* Surface au sol : deux champs vides, saisis à la main (liste déroulante vide, valeurs libres). */}
         <input
