@@ -82,8 +82,8 @@ export default function ReseauxPage({ searchParams }: { searchParams?: { semaine
           <span className="pill pill-accent">{aPublier.length}</span>
         </div>
         <p className="text-xs text-muted mb-3">
-          Biens sans publication depuis plus de {SEUIL_ALERTE_PUBLICATION_JOURS} jours. Les biens off-market n'y figurent
-          jamais.
+          Biens sans publication depuis plus de {SEUIL_ALERTE_PUBLICATION_JOURS} jours. Les biens off-market y figurent :
+          publication anonymisée, sans quartier ni prix.
         </p>
         {aPublier.length === 0 ? (
           <p className="text-sm text-muted">Rien à signaler.</p>
@@ -94,6 +94,7 @@ export default function ReseauxPage({ searchParams }: { searchParams?: { semaine
                 <Link href={`/biens/${bien.id}`} className="text-accent hover:underline">
                   {bien.reference} — {bien.titre}
                 </Link>
+                {bien.diffusionEtat === "off_market" && <span className="pill pill-interne">Off-market</span>}
                 <span className="text-red font-medium">
                   {dernierePublication ? depuisJours(ecartJours(dernierePublication, aujourdhui)) : "Jamais publié"}
                 </span>

@@ -72,6 +72,7 @@ export default function JourneePage() {
             <li key={bien.id} className="text-sm flex items-center justify-between gap-2">
               <Link href={`/biens/${bien.id}`} className="text-accent hover:underline">
                 {bien.reference} — {bien.titre}
+                {bien.diffusionEtat === "off_market" && <span className="pill pill-interne ml-2">Off-market</span>}
               </Link>
               <span className="label-sm">
                 {dernierePublication ? depuisJours(ecartJours(dernierePublication, aujourdhui)) : "Jamais publié"}
