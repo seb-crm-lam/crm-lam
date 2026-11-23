@@ -779,15 +779,16 @@ export interface BienAPublier {
 }
 
 // Biens sans publication depuis plus de 14 jours (ou jamais publiés). Exclus :
-// off-market (décision de Seb du 1er novembre), archivés, brouillons, retirés,
-// vendus, loués.
+// archivés, brouillons, retirés, vendus, loués. Off-market inclus depuis le
+// 23 novembre 2026 (remplace l'exclusion du 1er novembre) : publication anonymisée,
+// sans quartier ni prix, faite à la main par Seb.
 export function getBiensAPublier(aujourdhui: string): BienAPublier[] {
   const seuil = SEUIL_ALERTE_PUBLICATION_JOURS;
   const rows = db
     .prepare(
       `SELECT b.id AS id, MAX(p.datePublication) AS derniere
        FROM Bien b LEFT JOIN Publication p ON p.bienId = b.id
-       WHERE b.diffusionEtat IN ('publie', 'publie_hors_catalogue')
+       WHERE b.diffusionEtat IN ('publie', 'publie_hors_catalogue', 'off_market')
          AND b.statutCommercial IN ('disponible', 'sous_promesse')
        GROUP BY b.id`
     )
