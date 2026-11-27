@@ -31,6 +31,7 @@ function surfacePrincipale(bien: Bien): number | null {
     case "fonds_commerce":
       return bien.surfaceSol;
     case "villa":
+    case "maison":
       return bien.surfaceHabitable ?? bien.surfaceSol;
     case "appartement":
       return bien.surfaceHabitable;
@@ -164,6 +165,7 @@ export function rendreFicheClientHtml(opts: {
       ajout("Surface au sol", m2(bien.surfaceSol));
       break;
     case "villa":
+    case "maison":
       ajout("Surface habitable", m2(bien.surfaceHabitable));
       ajout("Surface au sol", m2(bien.surfaceSol));
       ajout("Terrain", m2(bien.surfaceTerrain));
