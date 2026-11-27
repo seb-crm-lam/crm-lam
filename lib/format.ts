@@ -44,15 +44,17 @@ export function heuresDepuisTexte(iso: string): string {
 export const TYPE_BIEN_LABELS: Record<string, string> = {
   riad: "Riad",
   villa: "Villa",
+  maison: "Maison", // 27 novembre 2026 — ajouté à la demande de Seb (surfaces comme une villa)
   appartement: "Appartement",
   terrain: "Terrain",
   fonds_commerce: "Fonds de commerce",
 };
 
 // Souhait d'état du bien dans une recherche (26 octobre 2026).
+// 27 novembre 2026 : « À exploiter ou prêt à vivre » est rangé dans « Autre ».
 export const ETAT_RECHERCHE_LABELS: Record<string, string> = {
   en_exploitation: "En exploitation",
-  autre: "Autre (à rénover, semi-fini ou à démolir)",
+  autre: "Autre (à rénover, semi-fini, à démolir, à exploiter ou prêt à vivre)",
 };
 
 // Fourchette de surface d'une recherche : « 80 – 100 m² », « à partir de 80 m² »…

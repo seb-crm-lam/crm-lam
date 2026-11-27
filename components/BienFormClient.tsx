@@ -128,7 +128,7 @@ export default function BienFormClient({ bien, quartiers, contacts, prestations,
               className="input"
             />
           </Champ>
-          {(typeBien === "villa" || typeBien === "terrain") && (
+          {(typeBien === "villa" || typeBien === "maison" || typeBien === "terrain") && (
             <Champ label="Surface du terrain (m²)">
               <input
                 type="number"
@@ -151,11 +151,16 @@ export default function BienFormClient({ bien, quartiers, contacts, prestations,
               <option value="en_exploitation">En exploitation</option>
               {/* 19 octobre 2026 — « Semi-fini » et « À démolir » : riad, villa, appartement.
                   La valeur déjà enregistrée reste affichée si le type change, pour ne rien effacer en silence. */}
-              {(typeBien === "riad" || typeBien === "villa" || typeBien === "appartement" || bien?.etatBien === "semi_fini") && (
+              {/* 27 novembre 2026 — « Maison » rejoint riad, villa, appartement pour ces états, et
+                  « À exploiter ou prêt à vivre » est ajouté pour les mêmes quatre types. */}
+              {(typeBien === "riad" || typeBien === "villa" || typeBien === "maison" || typeBien === "appartement" || bien?.etatBien === "semi_fini") && (
                 <option value="semi_fini">Semi-fini</option>
               )}
-              {(typeBien === "riad" || typeBien === "villa" || typeBien === "appartement" || bien?.etatBien === "a_demolir") && (
+              {(typeBien === "riad" || typeBien === "villa" || typeBien === "maison" || typeBien === "appartement" || bien?.etatBien === "a_demolir") && (
                 <option value="a_demolir">À démolir</option>
+              )}
+              {(typeBien === "riad" || typeBien === "villa" || typeBien === "maison" || typeBien === "appartement" || bien?.etatBien === "a_exploiter_pret_a_vivre") && (
+                <option value="a_exploiter_pret_a_vivre">À exploiter ou prêt à vivre</option>
               )}
             </select>
           </Champ>

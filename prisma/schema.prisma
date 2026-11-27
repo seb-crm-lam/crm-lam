@@ -46,7 +46,7 @@ model Bien {
   id        String   @id @default(uuid())
   reference String   @unique
   titre     String
-  typeBien  String // riad|villa|appartement|terrain|fonds_commerce
+  typeBien  String // riad|villa|maison|appartement|terrain|fonds_commerce
   transaction String // vente|location_longue_duree
 
   ville         String  @default("Marrakech")
@@ -61,7 +61,7 @@ model Bien {
   statutJuridique String? // titre_foncier|melkia|en_requisition
   numeroTitre     String? // interne
 
-  etatBien          String? // a_renover|en_exploitation|semi_fini|a_demolir — peut être vide
+  etatBien          String? // a_renover|en_exploitation|semi_fini|a_demolir|a_exploiter_pret_a_vivre — peut être vide
   modeExploitation  String? // maison_hotes|location_entiere|autre — interne
   surfaceSol        Float?
   surfaceHabitable  Float?

@@ -38,6 +38,7 @@ const DUREE_MAX_FINALISER_MS = 10 * 60 * 1000;
 const TYPE: Record<string, string> = {
   riad: "Riad",
   villa: "Villa",
+  maison: "Maison", // 27 novembre 2026 — ⚠️ à déclarer côté site avant tout envoi
   appartement: "Appartement",
   terrain: "Terrain",
   fonds_commerce: "Fonds de commerce",
@@ -48,6 +49,8 @@ const ETAT: Record<string, string> = {
   en_exploitation: "En exploitation",
   semi_fini: "Semi-fini",
   a_demolir: "À démolir",
+  // 27 novembre 2026 — ⚠️ à déclarer côté site (lam_etat) avant tout envoi
+  a_exploiter_pret_a_vivre: "À exploiter ou prêt à vivre",
 };
 const STATUT_JURIDIQUE: Record<string, string> = {
   titre_foncier: "Titre foncier",
@@ -158,9 +161,10 @@ export function construireFiche(bien: Bien, photos: BienPhoto[] | null): Record<
     fiche.loyerMensuel = bien.loyerMensuel;
     fiche.chargesMensuelles = bien.chargesMensuelles;
   }
-  if (t === "riad" || t === "villa" || estFonds) fiche.surfaceSol = bien.surfaceSol;
-  if (t === "villa" || t === "appartement") fiche.surfaceHabitable = bien.surfaceHabitable;
-  if (t === "villa" || t === "terrain") fiche.surfaceTerrain = bien.surfaceTerrain;
+  // 27 novembre 2026 : « maison » suit les surfaces d'une villa.
+  if (t === "riad" || t === "villa" || t === "maison" || estFonds) fiche.surfaceSol = bien.surfaceSol;
+  if (t === "villa" || t === "maison" || t === "appartement") fiche.surfaceHabitable = bien.surfaceHabitable;
+  if (t === "villa" || t === "maison" || t === "terrain") fiche.surfaceTerrain = bien.surfaceTerrain;
   if (t === "terrain") {
     fiche.terrainViabilise = bien.terrainViabilise ?? false;
     fiche.constructible = bien.constructible ?? false;

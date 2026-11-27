@@ -115,8 +115,11 @@ function extraireChampsBien(formData: FormData, creation = false) {
     surfaceHabitable: champNombre(formData, "surfaceHabitable"),
     // 19 octobre : surface du terrain, villa et terrain seulement (cadrage §3) ;
     // facultative, hors feu vert. Vidée si le type n'est plus l'un des deux.
+    // 27 novembre : « maison » (surfaces comme une villa) la porte aussi.
     surfaceTerrain:
-      typeBien === "villa" || typeBien === "terrain" ? champNombre(formData, "surfaceTerrain") : null,
+      typeBien === "villa" || typeBien === "maison" || typeBien === "terrain"
+        ? champNombre(formData, "surfaceTerrain")
+        : null,
     chambres: champNombre(formData, "chambres"),
     sallesBain: champNombre(formData, "sallesBain"),
     prixVente: champNombre(formData, "prixVente"),
@@ -352,7 +355,7 @@ function verifierChampsContact(champs: { nom: string; telephone: string | null }
 // les recherches plus anciennes, s'il y en a, ne sont pas touchées.
 // ---------------------------------------------------------------------------
 
-const TYPES_BIEN_RECHERCHE = ["riad", "villa", "appartement", "terrain", "fonds_commerce"];
+const TYPES_BIEN_RECHERCHE = ["riad", "villa", "maison", "appartement", "terrain", "fonds_commerce"];
 const ETATS_RECHERCHE = ["en_exploitation", "autre"];
 const STATUTS_RECHERCHE = ["actif", "satisfait", "abandonne"];
 

@@ -467,7 +467,7 @@ export default function FicheBienPage({
               <div>{formatM2(bien.surfaceSol)}</div>
               <div className="label-sm">Surface habitable</div>
               <div>{formatM2(bien.surfaceHabitable)}</div>
-              {(bien.typeBien === "villa" || bien.typeBien === "terrain") && (
+              {(bien.typeBien === "villa" || bien.typeBien === "maison" || bien.typeBien === "terrain") && (
                 <>
                   <div className="label-sm">Surface du terrain</div>
                   <div>{formatM2(bien.surfaceTerrain)}</div>

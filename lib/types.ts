@@ -1,11 +1,11 @@
 // Types du prototype — mêmes noms de champs que
 // claude/CRM_LAM_schema_donnees.md (camelCase).
 
-export type TypeBien = "riad" | "villa" | "appartement" | "terrain" | "fonds_commerce";
+export type TypeBien = "riad" | "villa" | "maison" | "appartement" | "terrain" | "fonds_commerce";
 export type TransactionType = "vente" | "location_longue_duree";
-// Souhait d'un client : « en exploitation » ou « autre » (à rénover, semi-fini, à démolir).
+// Souhait d'un client : « en exploitation » ou « autre » (à rénover, semi-fini, à démolir, à exploiter ou prêt à vivre).
 export type EtatBienRecherche = "en_exploitation" | "autre";
-export type EtatBien = "a_renover" | "en_exploitation" | "semi_fini" | "a_demolir" | null;
+export type EtatBien = "a_renover" | "en_exploitation" | "semi_fini" | "a_demolir" | "a_exploiter_pret_a_vivre" | null;
 export type DiffusionEtat = "brouillon" | "off_market" | "publie" | "publie_hors_catalogue" | "archive";
 export type StatutCommercial = "disponible" | "sous_promesse" | "vendu" | "loue" | "retire";
 
